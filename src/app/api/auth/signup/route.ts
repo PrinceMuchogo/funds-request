@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       name: data.fullName,
       email: data.email,
       password: hashedPassword,
-      role: "user",
+      role: "employee",
       ecno: data.employeeId,
       idno: data.idno,
       address: data.address,

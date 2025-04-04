@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +26,7 @@ const mockClaims = [
   {
     id: "1",
     activity: "Business Trip to New York",
-    amount: 1250.00,
+    amount: 1250.0,
     status: "pending_checker",
     date: "2024-03-20",
     venue: "NYC Conference Center",
@@ -33,7 +34,7 @@ const mockClaims = [
   {
     id: "2",
     activity: "Training Workshop",
-    amount: 450.00,
+    amount: 450.0,
     status: "approved",
     date: "2024-03-18",
     venue: "Local Office",
@@ -41,7 +42,7 @@ const mockClaims = [
   {
     id: "3",
     activity: "Client Meeting",
-    amount: 300.00,
+    amount: 300.0,
     status: "pending_approval",
     date: "2024-03-22",
     venue: "Client HQ",
@@ -66,28 +67,33 @@ const statusOptions = [
 export default function Claims() {
   const [claims] = useState(mockClaims);
   const [statusFilter, setStatusFilter] = useState("all");
+  const { data: session } = useSession();
+
+  console.log("session: ", session)
 
   const filteredClaims = claims.filter(
-    claim => statusFilter === "all" || claim.status === statusFilter
+    (claim) => statusFilter === "all" || claim.status === statusFilter,
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">My Claims</h1>
-          <p className="text-gray-600 mt-1">Manage and track your expense claims</p>
+          <p className="mt-1 text-gray-600">
+            Manage and track your expense claims
+          </p>
         </div>
         <Link href="/dashboard/claims/new">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="bg-blue-600 text-white hover:bg-blue-700">
+            <Plus className="mr-2 h-4 w-4" />
             New Claim
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 border-b">
+      <div className="overflow-hidden rounded-xl bg-white shadow-lg">
+        <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -95,7 +101,7 @@ export default function Claims() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map(option => (
+                {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -120,20 +126,30 @@ export default function Claims() {
             <TableBody>
               {filteredClaims.map((claim) => (
                 <TableRow key={claim.id}>
-                  <TableCell className="font-medium">{claim.activity}</TableCell>
+                  <TableCell className="font-medium">
+                    {claim.activity}
+                  </TableCell>
                   <TableCell>{claim.venue}</TableCell>
                   <TableCell>${claim.amount.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusColors[claim.status as keyof typeof statusColors]}
+                      className={
+                        statusColors[claim.status as keyof typeof statusColors]
+                      }
                     >
                       {claim.status.replace("_", " ").toUpperCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(claim.date).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                    {new Date(claim.date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-gray-100"
+                    >
                       <FileText className="h-4 w-4" />
                     </Button>
                   </TableCell>

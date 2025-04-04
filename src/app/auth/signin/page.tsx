@@ -7,23 +7,40 @@ import { CircleDollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signIn } from "next-auth/react";
+import { toast } from "react-toastify";
 // import { useToast } from "@/hooks/use-toast";
 
 export default function SignIn() {
   const router = useRouter();
   // const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Implement actual authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push("/dashboard/claims");
-    }, 1000);
+
+    // console.log('email +++++')
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      console.log('errorr: ',result.error);
+      setIsLoading(false)
+      toast.error(result.error);
+    } else {
+      window.location.href = "/dashboard/claims";
+      setIsLoading(false)
+      toast.success('Welcome ☺️');
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -52,6 +69,8 @@ export default function SignIn() {
                 type="email"
                 autoComplete="email"
                 required
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -63,6 +82,8 @@ export default function SignIn() {
                 type="password"
                 autoComplete="current-password"
                 required
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
                 className="mt-1"
               />
             </div>

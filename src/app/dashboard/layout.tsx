@@ -15,6 +15,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
 
 const navigation = {
   employee: [
@@ -25,9 +26,11 @@ const navigation = {
   ],
   checker: [
     { name: "Pending Claims", href: "/dashboard/checker/claims", icon: ClipboardList },
+    { name: "Pending Acquittals", href: "/dashboard/checker/acquittals", icon: Receipt },
   ],
   approver: [
     { name: "Pending Approvals", href: "/dashboard/approver/claims", icon: ClipboardList },
+    { name: "Pending Acquittals", href: "/dashboard/approver/acquittals", icon: Receipt },
   ],
   admin: [
     { name: "User Management", href: "/dashboard/admin/users", icon: Users },
@@ -39,8 +42,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const {data:session}=useSession()
   const pathname = usePathname();
-  const role = "employee"; // TODO: Get from auth context
+  const role = session?.user.role; // TODO: Get from auth context
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -67,7 +71,7 @@ export default function DashboardLayout({
           </Link>
         </div>
         <nav className="px-4 py-4">
-          {navigation[role as keyof typeof navigation].map((item) => (
+          {navigation[role as keyof typeof navigation]?.map((item) => (
             <Link
               key={item.name}
               href={item.href}

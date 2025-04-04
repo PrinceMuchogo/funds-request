@@ -21,13 +21,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning={true}>
-        <ToastContainer />
-        <Provider>
+      <Provider>
+        <body suppressHydrationWarning={true}>
+          <ToastContainer />
           <Header />
           {children}
-        </Provider>
-      </body>
+        </body>
+      </Provider>
     </html>
   );
 }

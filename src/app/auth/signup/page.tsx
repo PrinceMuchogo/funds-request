@@ -53,8 +53,8 @@ export default function SignUp() {
 
       const data = await response.json();
       if (response.ok) {
-        toast.success(data.message);
         router.push("/");
+        toast.success(data.message);
       } else {
         toast.error(data.message);
       }
