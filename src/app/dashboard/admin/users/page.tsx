@@ -146,7 +146,7 @@ export default function AdminUsers() {
                   <option value="admin">Admin</option>
                 </select>
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full text-white">
                 Add User
               </Button>
             </form>

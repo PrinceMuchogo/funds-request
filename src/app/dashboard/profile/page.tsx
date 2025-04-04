@@ -85,7 +85,7 @@ export default function Profile() {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full text-white"
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save Changes"}

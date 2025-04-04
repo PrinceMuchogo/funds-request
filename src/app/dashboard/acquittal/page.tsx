@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Filter } from "lucide-react";
+import { FileText, Filter, Receipt } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,11 @@ const mockClaims = [
     id: "1",
     activity: "Business Trip to New York",
     amount: 1250.00,
-    status: "pending_checker",
+    advanceAmount: 1500.00,
+    acquittedAmount: 1250.00,
+    refundAmount: 250.00,
+    status: "approved",
+    acquittalStatus: "pending",
     date: "2024-03-20",
     venue: "NYC Conference Center",
   },
@@ -34,56 +38,44 @@ const mockClaims = [
     id: "2",
     activity: "Training Workshop",
     amount: 450.00,
+    advanceAmount: 400.00,
+    acquittedAmount: 450.00,
+    extraClaimAmount: 50.00,
     status: "approved",
+    acquittalStatus: "completed",
     date: "2024-03-18",
     venue: "Local Office",
-  },
-  {
-    id: "3",
-    activity: "Client Meeting",
-    amount: 300.00,
-    status: "pending_approval",
-    date: "2024-03-22",
-    venue: "Client HQ",
   },
 ];
 
 const statusColors = {
-  pending_checker: "bg-yellow-100 text-yellow-800",
-  pending_approval: "bg-blue-100 text-blue-800",
-  approved: "bg-green-100 text-green-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  completed: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
 };
 
 const statusOptions = [
-  { value: "all", label: "All Claims" },
-  { value: "pending_checker", label: "Pending Checker" },
-  { value: "pending_approval", label: "Pending Approval" },
-  { value: "approved", label: "Approved" },
+  { value: "all", label: "All Acquittals" },
+  { value: "pending", label: "Pending" },
+  { value: "completed", label: "Completed" },
   { value: "rejected", label: "Rejected" },
 ];
 
-export default function Claims() {
+export default function Acquittals() {
   const [claims] = useState(mockClaims);
   const [statusFilter, setStatusFilter] = useState("all");
 
   const filteredClaims = claims.filter(
-    claim => statusFilter === "all" || claim.status === statusFilter
+    claim => statusFilter === "all" || claim.acquittalStatus === statusFilter
   );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold">My Claims</h1>
-          <p className="text-gray-600 mt-1">Manage and track your expense claims</p>
+          <h1 className="text-2xl font-bold">Acquittals</h1>
+          <p className="text-gray-600 mt-1">Manage and track your expense acquittals</p>
         </div>
-        <Link href="/dashboard/claims/new">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            New Claim
-          </Button>
-        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -111,7 +103,9 @@ export default function Claims() {
               <TableRow>
                 <TableHead>Activity</TableHead>
                 <TableHead>Venue</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Advance</TableHead>
+                <TableHead>Acquitted</TableHead>
+                <TableHead>Refund/Extra</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Actions</TableHead>
@@ -122,20 +116,38 @@ export default function Claims() {
                 <TableRow key={claim.id}>
                   <TableCell className="font-medium">{claim.activity}</TableCell>
                   <TableCell>{claim.venue}</TableCell>
-                  <TableCell>${claim.amount.toFixed(2)}</TableCell>
+                  <TableCell>${claim.advanceAmount.toFixed(2)}</TableCell>
+                  <TableCell>${claim.acquittedAmount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {claim.refundAmount ? (
+                      <span className="text-red-600">-${claim.refundAmount.toFixed(2)}</span>
+                    ) : claim.extraClaimAmount ? (
+                      <span className="text-green-600">+${claim.extraClaimAmount.toFixed(2)}</span>
+                    ) : (
+                      "$0.00"
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusColors[claim.status as keyof typeof statusColors]}
+                      className={statusColors[claim.acquittalStatus as keyof typeof statusColors]}
                     >
-                      {claim.status.replace("_", " ").toUpperCase()}
+                      {claim.acquittalStatus.toUpperCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(claim.date).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                      <FileText className="h-4 w-4" />
-                    </Button>
+                    {claim.acquittalStatus === "pending" ? (
+                      <Link href={`/dashboard/acquittal/${claim.id}`}>
+                        <Button variant="ghost" size="icon" className="hover:bg-blue-50">
+                          <Receipt className="h-4 w-4 text-blue-600" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

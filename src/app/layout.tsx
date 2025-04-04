@@ -5,10 +5,13 @@ import "@/css/style.css";
 import React from "react";
 import { Metadata } from "next";
 import { Header } from "@/components/NewHeader/Header";
+import { Provider } from "@/components/Provider/Provider";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const metadata: Metadata = {
-  title: 'FundFlow - Enterprise Fund Claims Management',
-  description: 'Streamlined fund claims processing for enterprises',
+  title: "FundFlow - Enterprise Fund Claims Management",
+  description: "Streamlined fund claims processing for enterprises",
 };
 
 export default function RootLayout({
@@ -16,12 +19,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <Header/>
-        {children}
+        <ToastContainer />
+        <Provider>
+          <Header />
+          {children}
+        </Provider>
       </body>
     </html>
   );

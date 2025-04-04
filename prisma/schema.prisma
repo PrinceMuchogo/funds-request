@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(uuid())
+  name          String?
+  ecno          String?     @unique
+  idno          String?     @unique
+  address       String?
+  phone         String?     @unique
+  email         String?     @unique
+  password      String?
+  bankname      String?
+  status        String?
+  branch        String?
+  accountNumber String?
+  department String?
+  role          String?
+  claims        ClaimForm[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model ClaimForm {
+  id                                String                             @id @default(uuid())
+  userId                            String?
+  user                              User?                              @relation(fields: [userId], references: [id])
+  activity                          String
+  station                           String
+  from                              DateTime
+  to                                DateTime
+  venue                             String
+  checkedBy                         String?
+  approvedBy                        String?
+  status                            String?
+  acquittalStatus                   String?
+  amount                            Float?
+  comment                           String?
+  advanceAmount                     Float?
+  acquittedAmount                   Float?                             @default(0) // NEW: Stores the total amount acquitted
+  refundAmount                      Float?                             @default(0) // NEW: Stores the amount to be refunded (if advance > expenses)
+  extraClaimAmount                  Float?                             @default(0) // NEW: Stores the amount to be reimbursed (if expenses > advance)
+  travellingAndSubsistence          TravellingAndSubsistence[]
+  expertAndAdministrationAllowances ExpertAndAdministrationAllowance[]
+  createdAt                         DateTime                           @default(now())
+  updatedAt                         DateTime                           @updatedAt
+}
+
+model TravellingAndSubsistence {
+  id            String     @id @default(uuid())
+  claimId       String
+  claim         ClaimForm? @relation(fields: [claimId], references: [id])
+  fromPlace     String?
+  toPlace       String?
+  dateDeparture DateTime?
+  dateArrived   DateTime?
+  board         Float?
+  breakfast     Float?
+  lunch         Float?
+  dinner        Float?
+  fares         Float?
+  supper        Float?
+  total         Float?     @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model ExpertAndAdministrationAllowance {
+  id          String     @id @default(uuid())
+  claimId     String?
+  claim       ClaimForm? @relation(fields: [claimId], references: [id])
+  designation String?
+  activity    String?
+  allowance   Float?
+  units       Int?
+  rate        Float?
+  total       Float?     @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}

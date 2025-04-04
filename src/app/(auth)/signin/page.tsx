@@ -21,7 +21,7 @@ export default function SignIn() {
     // TODO: Implement actual authentication
     setTimeout(() => {
       setIsLoading(false);
-      router.push("/dashboard");
+      router.push("/dashboard/claims");
     }, 1000);
   };
 
@@ -70,7 +70,7 @@ export default function SignIn() {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full text-white"
             disabled={isLoading}
           >
             {isLoading ? "Signing in..." : "Sign in"}
