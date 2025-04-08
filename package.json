@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build && prisma migrate deploy && tsx src/data/seeders/db.seed.ts",
+    "db:seed": "tsx src/data/seeders/db.seed.ts",
     "start": "next start",
     "lint": "next lint"
   },
@@ -48,6 +49,7 @@
     "prettier-plugin-tailwindcss": "^0.5.11",
     "prisma": "^6.5.0",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.3",
     "typescript": "^5"
   }
 }

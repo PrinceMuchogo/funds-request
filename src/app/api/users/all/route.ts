@@ -3,6 +3,11 @@ import prisma from "@/utils/dbconfig";
 export async function GET(req: Request) {
   try {
     const users = await prisma.user.findMany({
+      where: {
+        name: {
+          notIn: ["admin"],
+        },
+      },
     });
 
     return new Response(JSON.stringify(users), { status: 201 });

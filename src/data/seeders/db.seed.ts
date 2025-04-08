@@ -16,9 +16,16 @@ async function main() {
       name: 'Admin',
       email: adminEmail,
       password: hashedPassword, 
-      role: 'ADMIN',
+      role: 'admin',
       phone: '0774567890',
       address: 'Head Quarters',
+      ecno: "12345678",
+      idno: "317498134589",
+      status: "active",
+      bankname: "Access",
+      branch: "New",
+      accountNumber: "0924657494877",
+      department: "Administration",
     },
   });
 
