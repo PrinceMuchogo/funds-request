@@ -66,6 +66,7 @@ model TravellingAndSubsistence {
   toPlace       String?
   dateDeparture DateTime?
   dateArrived   DateTime?
+  day String?
   board         Float?
   breakfast     Float?
   lunch         Float?
@@ -83,6 +84,7 @@ model ExpertAndAdministrationAllowance {
   claim       ClaimForm? @relation(fields: [claimId], references: [id])
   designation String?
   activity    String?
+  day String?
   allowance   Float?
   units       Int?
   rate        Float?

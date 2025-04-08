@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -81,16 +81,35 @@ const statusColors = {
 
 const statusOptions = [
   { value: "all", label: "All Acquittals" },
-  { value: "pending_checker", label: "Pending Review" },
-  { value: "pending_approval", label: "In Progress" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "PENDING CHECKER", label: "Pending Review" },
+  { value: "PENDING APPROVAL", label: "In Progress" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
 export default function CheckerAcquittals() {
-  const [acquittals] = useState(mockAcquittals);
+  const [acquittals, setAcquittals] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+  
+    useEffect(() => {
+      const getClaims = async () => {
+        try {
+          const response = await fetch("/api/acquittal/all", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+  
+          const data = await response.json();
+          setAcquittals(data);
+          console.log("claims: ", data);
+        } catch (error) {}
+      };
+  
+      getClaims();
+    }, []);
 
   const filteredAcquittals = acquittals.filter(
     acquittal => statusFilter === "all" || acquittal.status === statusFilter
@@ -118,7 +137,7 @@ export default function CheckerAcquittals() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray">
                 {statusOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -148,11 +167,11 @@ export default function CheckerAcquittals() {
                 <TableRow key={acquittal.id}>
                   <TableCell className="font-medium">{acquittal.employee}</TableCell>
                   <TableCell>{acquittal.activity}</TableCell>
-                  <TableCell>${acquittal.advanceAmount.toFixed(2)}</TableCell>
-                  <TableCell>${acquittal.acquittedAmount.toFixed(2)}</TableCell>
+                  <TableCell>${Number(acquittal.advanceAmount).toFixed(2)}</TableCell>
+                  <TableCell>${Number(acquittal.acquittedAmount).toFixed(2)}</TableCell>
                   <TableCell>
                     {acquittal.refundAmount ? (
-                      <span className="text-red-600">-${acquittal.refundAmount.toFixed(2)}</span>
+                      <span className="text-red-600">-${Number(acquittal.refundAmount).toFixed(2)}</span>
                     ) : acquittal.acquittedAmount ? (
                       <span className="text-green-600">+${acquittal.refundAmount}</span>
                     ) : (
@@ -160,7 +179,7 @@ export default function CheckerAcquittals() {
                     )}
                   </TableCell>
                   <TableCell>{acquittal.department}</TableCell>
-                  <TableCell>{new Date(acquittal.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(acquittal.updatedAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Dialog>
@@ -211,7 +230,7 @@ export default function CheckerAcquittals() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {acquittal.details.travelExpenses.map((expense, index) => (
+                                    {acquittal.details.travelExpenses.map((expense: any, index: number) => (
                                       <TableRow key={index}>
                                         <TableCell>{expense.fromPlace}</TableCell>
                                         <TableCell>{expense.toPlace}</TableCell>
@@ -242,7 +261,7 @@ export default function CheckerAcquittals() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {acquittal.details.expertAllowances.map((allowance, index) => (
+                                    {acquittal.details.expertAllowances.map((allowance: any, index:number) => (
                                       <TableRow key={index}>
                                         <TableCell>{allowance.designation}</TableCell>
                                         <TableCell>{allowance.activity}</TableCell>

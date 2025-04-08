@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -28,51 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const mockAcquittals = [
-  {
-    id: "1",
-    employee: "John Doe",
-    activity: "Business Trip to New York",
-    advanceAmount: 1500.00,
-    acquittedAmount: 1250.00,
-    refundAmount: 250.00,
-    department: "Engineering",
-    checkedBy: "Jane Smith",
-    date: "2024-03-20",
-    venue: "NYC Conference Center",
-    status: "pending_approval",
-    details: {
-      from: "2024-03-15",
-      to: "2024-03-20",
-      travelExpenses: [
-        {
-          fromPlace: "Office",
-          toPlace: "NYC",
-          dateDeparture: "2024-03-15T09:00",
-          dateArrived: "2024-03-15T14:00",
-          board: 200,
-          breakfast: 15,
-          lunch: 25,
-          dinner: 40,
-          fares: 150,
-          supper: 20,
-          total: 450,
-        }
-      ],
-      expertAllowances: [
-        {
-          designation: "Senior Engineer",
-          activity: "Technical Presentation",
-          allowance: 100,
-          units: 3,
-          rate: 50,
-          total: 150,
-        }
-      ]
-    }
-  },
-];
-
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
   pending_approval: "bg-blue-100 text-blue-800",
@@ -82,18 +37,37 @@ const statusColors = {
 
 const statusOptions = [
   { value: "all", label: "All Acquittals" },
-  { value: "pending_approval", label: "Pending Approval" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "PENDING APPROVAL", label: "Pending Approval" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
 export default function ApproverAcquittals() {
-  const [acquittals] = useState(mockAcquittals);
+  const [acquittals, setAcquittals] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
+  useEffect(() => {
+    const getClaims = async () => {
+      try {
+        const response = await fetch("/api/acquittal/all", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        setAcquittals(data);
+        console.log("claims: ", data);
+      } catch (error) {}
+    };
+
+    getClaims();
+  }, []);
+
   const filteredAcquittals = acquittals.filter(
-    acquittal => statusFilter === "all" || acquittal.status === statusFilter
+    (acquittal) => statusFilter === "all" || acquittal.status === statusFilter,
   );
 
   const handleAction = (id: string, action: "approve" | "reject") => {
@@ -107,19 +81,21 @@ export default function ApproverAcquittals() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Acquittals Pending Approval</h1>
-        <p className="text-gray-600 mt-1">Review and approve expense acquittals</p>
+        <p className="mt-1 text-gray-600">
+          Review and approve expense acquittals
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 border-b">
+      <div className="overflow-hidden rounded-xl bg-white shadow-lg">
+        <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map(option => (
+              <SelectContent className="bg-gray">
+                {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -146,59 +122,133 @@ export default function ApproverAcquittals() {
             <TableBody>
               {filteredAcquittals.map((acquittal) => (
                 <TableRow key={acquittal.id}>
-                  <TableCell className="font-medium">{acquittal.employee}</TableCell>
+                  <TableCell className="font-medium">
+                    {acquittal.employee}
+                  </TableCell>
                   <TableCell>{acquittal.activity}</TableCell>
-                  <TableCell>${acquittal.advanceAmount.toFixed(2)}</TableCell>
-                  <TableCell>${acquittal.acquittedAmount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    ${Number(acquittal.advanceAmount).toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    ${Number(acquittal.acquittedAmount).toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     {acquittal.refundAmount ? (
-                      <span className="text-red-600">-${acquittal.refundAmount.toFixed(2)}</span>
+                      <span className="text-red-600">
+                        -${Number(acquittal.refundAmount).toFixed(2)}
+                      </span>
                     ) : acquittal.refundAmount ? (
-                      <span className="text-green-600">+${acquittal.refundAmount}</span>
+                      <span className="text-green-600">
+                        +${acquittal.refundAmount}
+                      </span>
                     ) : (
                       "$0.00"
                     )}
                   </TableCell>
                   <TableCell>{acquittal.checkedBy}</TableCell>
-                  <TableCell>{new Date(acquittal.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {new Date(acquittal.updatedAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="hover:bg-blue-50">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:bg-blue-50"
+                          >
                             <Eye className="h-4 w-4 text-blue-600" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Acquittal Details</DialogTitle>
                           </DialogHeader>
                           <div className="mt-4 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                <h3 className="font-semibold">Basic Information</h3>
+                                <h3 className="font-semibold">
+                                  Basic Information
+                                </h3>
                                 <div className="mt-2 space-y-2">
-                                  <p><span className="text-gray-600">Employee:</span> {acquittal.employee}</p>
-                                  <p><span className="text-gray-600">Activity:</span> {acquittal.activity}</p>
-                                  <p><span className="text-gray-600">Venue:</span> {acquittal.venue}</p>
-                                  <p><span className="text-gray-600">Department:</span> {acquittal.department}</p>
-                                  <p><span className="text-gray-600">Advance Amount:</span> ${acquittal.advanceAmount.toFixed(2)}</p>
-                                  <p><span className="text-gray-600">Acquitted Amount:</span> ${acquittal.acquittedAmount.toFixed(2)}</p>
-                                  <p><span className="text-gray-600">Checked By:</span> {acquittal.checkedBy}</p>
-                                  <p><span className="text-gray-600">Date:</span> {new Date(acquittal.date).toLocaleDateString()}</p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Employee:
+                                    </span>{" "}
+                                    {acquittal.employee}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Activity:
+                                    </span>{" "}
+                                    {acquittal.activity}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Venue:
+                                    </span>{" "}
+                                    {acquittal.venue}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Department:
+                                    </span>{" "}
+                                    {acquittal.department}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Advance Amount:
+                                    </span>{" "}
+                                    $
+                                    {Number(acquittal.advanceAmount).toFixed(2)}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Acquitted Amount:
+                                    </span>{" "}
+                                    $
+                                    {Number(acquittal.acquittedAmount).toFixed(
+                                      2,
+                                    )}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">
+                                      Checked By:
+                                    </span>{" "}
+                                    {acquittal.checkedBy}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">Date:</span>{" "}
+                                    {new Date(
+                                      acquittal.updatedAt,
+                                    ).toLocaleDateString()}
+                                  </p>
                                 </div>
                               </div>
                               <div>
                                 <h3 className="font-semibold">Period</h3>
                                 <div className="mt-2 space-y-2">
-                                  <p><span className="text-gray-600">From:</span> {new Date(acquittal.details.from).toLocaleDateString()}</p>
-                                  <p><span className="text-gray-600">To:</span> {new Date(acquittal.details.to).toLocaleDateString()}</p>
+                                  <p>
+                                    <span className="text-gray-600">From:</span>{" "}
+                                    {new Date(
+                                      acquittal.details.from,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                  <p>
+                                    <span className="text-gray-600">To:</span>{" "}
+                                    {new Date(
+                                      acquittal.details.to,
+                                    ).toLocaleDateString()}
+                                  </p>
                                 </div>
                               </div>
                             </div>
 
                             <div>
-                              <h3 className="font-semibold mb-2">Travel Expenses</h3>
+                              <h3 className="mb-2 font-semibold">
+                                Travel Expenses
+                              </h3>
                               <div className="overflow-x-auto">
                                 <Table>
                                   <TableHeader>
@@ -212,25 +262,43 @@ export default function ApproverAcquittals() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {acquittal.details.travelExpenses.map((expense, index) => (
-                                      <TableRow key={index}>
-                                        <TableCell>{expense.fromPlace}</TableCell>
-                                        <TableCell>{expense.toPlace}</TableCell>
-                                        <TableCell>${expense.board}</TableCell>
-                                        <TableCell>
-                                          ${expense.breakfast + expense.lunch + expense.dinner + expense.supper}
-                                        </TableCell>
-                                        <TableCell>${expense.fares}</TableCell>
-                                        <TableCell>${expense.total}</TableCell>
-                                      </TableRow>
-                                    ))}
+                                    {acquittal.details.travelExpenses.map(
+                                      (expense: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell>
+                                            {expense.fromPlace}
+                                          </TableCell>
+                                          <TableCell>
+                                            {expense.toPlace}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${expense.board}
+                                          </TableCell>
+                                          <TableCell>
+                                            $
+                                            {expense.breakfast +
+                                              expense.lunch +
+                                              expense.dinner +
+                                              expense.supper}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${expense.fares}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${expense.total}
+                                          </TableCell>
+                                        </TableRow>
+                                      ),
+                                    )}
                                   </TableBody>
                                 </Table>
                               </div>
                             </div>
 
                             <div>
-                              <h3 className="font-semibold mb-2">Expert Allowances</h3>
+                              <h3 className="mb-2 font-semibold">
+                                Expert Allowances
+                              </h3>
                               <div className="overflow-x-auto">
                                 <Table>
                                   <TableHeader>
@@ -243,15 +311,27 @@ export default function ApproverAcquittals() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {acquittal.details.expertAllowances.map((allowance, index) => (
-                                      <TableRow key={index}>
-                                        <TableCell>{allowance.designation}</TableCell>
-                                        <TableCell>{allowance.activity}</TableCell>
-                                        <TableCell>{allowance.units}</TableCell>
-                                        <TableCell>${allowance.rate}</TableCell>
-                                        <TableCell>${allowance.total}</TableCell>
-                                      </TableRow>
-                                    ))}
+                                    {acquittal.details.expertAllowances.map(
+                                      (allowance: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell>
+                                            {allowance.designation}
+                                          </TableCell>
+                                          <TableCell>
+                                            {allowance.activity}
+                                          </TableCell>
+                                          <TableCell>
+                                            {allowance.units}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${allowance.rate}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${allowance.total}
+                                          </TableCell>
+                                        </TableRow>
+                                      ),
+                                    )}
                                   </TableBody>
                                 </Table>
                               </div>

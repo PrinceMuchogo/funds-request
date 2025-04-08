@@ -12,19 +12,19 @@ import {
   Building2,
   Plus,
   Trash2,
-  Clock,
-  Coffee,
-  UtensilsCrossed,
-  Bus,
-  Moon,
-  BadgeDollarSign,
-  Users,
-  Activity,
-  Calculator,
   Receipt,
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type TravellingExpense = {
+  day: number;
   fromPlace: string;
   toPlace: string;
   dateDeparture: string;
@@ -39,6 +39,7 @@ type TravellingExpense = {
 };
 
 type ExpertAllowance = {
+  day: number;
   designation: string;
   activity: string;
   allowance: number;
@@ -60,6 +61,7 @@ const mockClaim = {
   acquittalStatus: "pending",
   travelExpenses: [
     {
+      day: 1,
       fromPlace: "Office",
       toPlace: "NYC",
       dateDeparture: "2024-03-15T09:00",
@@ -75,6 +77,7 @@ const mockClaim = {
   ],
   expertAllowances: [
     {
+      day: 1,
       designation: "Senior Engineer",
       activity: "Technical Presentation",
       allowance: 100,
@@ -91,6 +94,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(false);
   const [claim] = useState(mockClaim);
   const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([{
+    day: claim.travelExpenses.length + 1,
     fromPlace: "",
     toPlace: "",
     dateDeparture: "",
@@ -104,6 +108,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
     total: 0,
   }]);
   const [expertAllowances, setExpertAllowances] = useState<ExpertAllowance[]>([{
+    day: claim.expertAllowances.length + 1,
     designation: "",
     activity: "",
     allowance: 0,
@@ -112,8 +117,38 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
     total: 0,
   }]);
 
+  const calculateTravelExpenseTotal = (expense: TravellingExpense) => {
+    return expense.board + expense.breakfast + expense.lunch + 
+           expense.dinner + expense.fares + expense.supper;
+  };
+
+  const calculateExpertAllowanceTotal = (allowance: ExpertAllowance) => {
+    return allowance.units * allowance.rate;
+  };
+
+  const updateTravelExpense = (index: number, field: keyof TravellingExpense, value: any) => {
+    const updatedExpenses = [...travelExpenses];
+    updatedExpenses[index] = {
+      ...updatedExpenses[index],
+      [field]: value,
+      total: field === 'total' ? value : calculateTravelExpenseTotal(updatedExpenses[index])
+    };
+    setTravelExpenses(updatedExpenses);
+  };
+
+  const updateExpertAllowance = (index: number, field: keyof ExpertAllowance, value: any) => {
+    const updatedAllowances = [...expertAllowances];
+    updatedAllowances[index] = {
+      ...updatedAllowances[index],
+      [field]: value,
+      total: field === 'total' ? value : calculateExpertAllowanceTotal(updatedAllowances[index])
+    };
+    setExpertAllowances(updatedAllowances);
+  };
+
   const addTravelExpense = () => {
     setTravelExpenses([...travelExpenses, {
+      day: claim.travelExpenses.length + travelExpenses.length + 1,
       fromPlace: "",
       toPlace: "",
       dateDeparture: "",
@@ -130,6 +165,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
 
   const addExpertAllowance = () => {
     setExpertAllowances([...expertAllowances, {
+      day: claim.expertAllowances.length + expertAllowances.length + 1,
       designation: "",
       activity: "",
       allowance: 0,
@@ -149,13 +185,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
 
   const calculateTotals = () => {
     const existingTravelTotal = claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0);
-    const newTravelTotal = travelExpenses.reduce((acc, curr) => {
-      const total = curr.board + curr.breakfast + curr.lunch + curr.dinner + curr.fares + curr.supper;
-      return acc + total;
-    }, 0);
+    const newTravelTotal = travelExpenses.reduce((acc, curr) => acc + curr.total, 0);
 
     const existingAllowanceTotal = claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0);
-    const newAllowanceTotal = expertAllowances.reduce((acc, curr) => acc + (curr.units * curr.rate), 0);
+    const newAllowanceTotal = expertAllowances.reduce((acc, curr) => acc + curr.total, 0);
 
     const totalExpenses = existingTravelTotal + newTravelTotal + existingAllowanceTotal + newAllowanceTotal;
     const difference = totalExpenses - claim.advanceAmount;
@@ -187,12 +220,12 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
         title: "Acquittal submitted successfully",
         description: "Your acquittal has been sent for review.",
       });
-    //   router.push("/claims");
+      // router.push("/claims");
     }, 1000);
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="bg-blue-600 p-6">
           <h1 className="text-2xl font-bold text-white">Acquittal Form</h1>
@@ -232,35 +265,53 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           </div>
 
           {/* Existing Travel Expenses */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-4">Existing Travel Expenses</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left">From</th>
-                    <th className="px-4 py-2 text-left">To</th>
-                    <th className="px-4 py-2 text-right">Board</th>
-                    <th className="px-4 py-2 text-right">Meals</th>
-                    <th className="px-4 py-2 text-right">Fares</th>
-                    <th className="px-4 py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Existing Travel Expenses</h2>
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Day</TableHead>
+                    <TableHead>From</TableHead>
+                    <TableHead>To</TableHead>
+                    <TableHead>Departure</TableHead>
+                    <TableHead>Arrival</TableHead>
+                    <TableHead>Board</TableHead>
+                    <TableHead>Breakfast</TableHead>
+                    <TableHead>Lunch</TableHead>
+                    <TableHead>Dinner</TableHead>
+                    <TableHead>Fares</TableHead>
+                    <TableHead>Supper</TableHead>
+                    <TableHead>Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {claim.travelExpenses.map((expense, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="px-4 py-2">{expense.fromPlace}</td>
-                      <td className="px-4 py-2">{expense.toPlace}</td>
-                      <td className="px-4 py-2 text-right">${expense.board}</td>
-                      <td className="px-4 py-2 text-right">
-                        ${expense.breakfast + expense.lunch + expense.dinner + expense.supper}
-                      </td>
-                      <td className="px-4 py-2 text-right">${expense.fares}</td>
-                      <td className="px-4 py-2 text-right">${expense.total}</td>
-                    </tr>
+                    <TableRow key={index}>
+                      <TableCell>{expense.day}</TableCell>
+                      <TableCell>{expense.fromPlace}</TableCell>
+                      <TableCell>{expense.toPlace}</TableCell>
+                      <TableCell>{new Date(expense.dateDeparture).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(expense.dateArrived).toLocaleString()}</TableCell>
+                      <TableCell>${expense.board.toFixed(2)}</TableCell>
+                      <TableCell>${expense.breakfast.toFixed(2)}</TableCell>
+                      <TableCell>${expense.lunch.toFixed(2)}</TableCell>
+                      <TableCell>${expense.dinner.toFixed(2)}</TableCell>
+                      <TableCell>${expense.fares.toFixed(2)}</TableCell>
+                      <TableCell>${expense.supper.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">${expense.total.toFixed(2)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-right font-semibold">
+                      Grand Total:
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      ${claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           </div>
 
@@ -279,125 +330,186 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
               </Button>
             </div>
 
-            {travelExpenses.map((expense, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-4 bg-gray-50">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      From Place
-                    </Label>
-                    <Input  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      To Place
-                    </Label>
-                    <Input   className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Departure Date & Time
-                    </Label>
-                    <Input type="datetime-local"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Arrival Date & Time
-                    </Label>
-                    <Input type="datetime-local"  className="mt-1" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      Board
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Coffee className="h-4 w-4" />
-                      Breakfast
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <UtensilsCrossed className="h-4 w-4" />
-                      Lunch
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <UtensilsCrossed className="h-4 w-4" />
-                      Dinner
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Bus className="h-4 w-4" />
-                      Fares
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Moon className="h-4 w-4" />
-                      Supper
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                </div>
-
-                {index > 0 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => removeTravelExpense(index)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Day</TableHead>
+                    <TableHead>From</TableHead>
+                    <TableHead>To</TableHead>
+                    <TableHead>Departure</TableHead>
+                    <TableHead>Arrival</TableHead>
+                    <TableHead>Board</TableHead>
+                    <TableHead>Breakfast</TableHead>
+                    <TableHead>Lunch</TableHead>
+                    <TableHead>Dinner</TableHead>
+                    <TableHead>Fares</TableHead>
+                    <TableHead>Supper</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {travelExpenses.map((expense, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{expense.day}</TableCell>
+                      <TableCell>
+                        <Input
+                          value={expense.fromPlace}
+                          onChange={(e) => updateTravelExpense(index, 'fromPlace', e.target.value)}
+                          className="min-w-[100px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={expense.toPlace}
+                          onChange={(e) => updateTravelExpense(index, 'toPlace', e.target.value)}
+                          className="min-w-[100px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="datetime-local"
+                          value={expense.dateDeparture}
+                          onChange={(e) => updateTravelExpense(index, 'dateDeparture', e.target.value)}
+                          className="min-w-[180px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="datetime-local"
+                          value={expense.dateArrived}
+                          onChange={(e) => updateTravelExpense(index, 'dateArrived', e.target.value)}
+                          className="min-w-[180px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.board}
+                          onChange={(e) => updateTravelExpense(index, 'board', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.breakfast}
+                          onChange={(e) => updateTravelExpense(index, 'breakfast', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.lunch}
+                          onChange={(e) => updateTravelExpense(index, 'lunch', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.dinner}
+                          onChange={(e) => updateTravelExpense(index, 'dinner', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.fares}
+                          onChange={(e) => updateTravelExpense(index, 'fares', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={expense.supper}
+                          onChange={(e) => updateTravelExpense(index, 'supper', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ${expense.total.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => removeTravelExpense(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-right font-semibold">
+                      Grand Total:
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      ${travelExpenses.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Existing Expert Allowances */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-4">Existing Expert Allowances</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left">Designation</th>
-                    <th className="px-4 py-2 text-left">Activity</th>
-                    <th className="px-4 py-2 text-right">Units</th>
-                    <th className="px-4 py-2 text-right">Rate</th>
-                    <th className="px-4 py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Existing Expert Allowances</h2>
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Day</TableHead>
+                    <TableHead>Designation</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Allowance</TableHead>
+                    <TableHead>Units</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead>Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {claim.expertAllowances.map((allowance, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="px-4 py-2">{allowance.designation}</td>
-                      <td className="px-4 py-2">{allowance.activity}</td>
-                      <td className="px-4 py-2 text-right">{allowance.units}</td>
-                      <td className="px-4 py-2 text-right">${allowance.rate}</td>
-                      <td className="px-4 py-2 text-right">${allowance.total}</td>
-                    </tr>
+                    <TableRow key={index}>
+                      <TableCell>{allowance.day}</TableCell>
+                      <TableCell>{allowance.designation}</TableCell>
+                      <TableCell>{allowance.activity}</TableCell>
+                      <TableCell>${allowance.allowance.toFixed(2)}</TableCell>
+                      <TableCell>{allowance.units}</TableCell>
+                      <TableCell>${allowance.rate.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">${allowance.total.toFixed(2)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-right font-semibold">
+                      Grand Total:
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      ${claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           </div>
 
@@ -416,59 +528,94 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
               </Button>
             </div>
 
-            {expertAllowances.map((allowance, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-4 bg-gray-50">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Designation
-                    </Label>
-                    <Input  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      Activity
-                    </Label>
-                    <Input  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <BadgeDollarSign className="h-4 w-4" />
-                      Allowance
-                    </Label>
-                    <Input type="number" min="0" step="0.01"  className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
-                      Units
-                    </Label>
-                    <Input type="number" min="1" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <BadgeDollarSign className="h-4 w-4" />
-                      Rate
-                    </Label>
-                    <Input type="number" min="0" step="0.01" className="mt-1" />
-                  </div>
-                </div>
-
-                {index > 0 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => removeExpertAllowance(index)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Day</TableHead>
+                    <TableHead>Designation</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Allowance</TableHead>
+                    <TableHead>Units</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expertAllowances.map((allowance, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{allowance.day}</TableCell>
+                      <TableCell>
+                        <Input
+                          value={allowance.designation}
+                          onChange={(e) => updateExpertAllowance(index, 'designation', e.target.value)}
+                          className="min-w-[150px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={allowance.activity}
+                          onChange={(e) => updateExpertAllowance(index, 'activity', e.target.value)}
+                          className="min-w-[150px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={allowance.allowance}
+                          onChange={(e) => updateExpertAllowance(index, 'allowance', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[100px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={allowance.units}
+                          onChange={(e) => updateExpertAllowance(index, 'units', parseInt(e.target.value))}
+                          min="1"
+                          className="min-w-[80px]"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={allowance.rate}
+                          onChange={(e) => updateExpertAllowance(index, 'rate', parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          className="min-w-[100px]"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ${allowance.total.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => removeExpertAllowance(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-right font-semibold">
+                      Grand Total:
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      ${expertAllowances.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Supporting Documents */}
@@ -484,11 +631,49 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 multiple
                 accept="image/*,.pdf"
                 className="mt-2"
-                
+                required
               />
               <p className="text-sm text-gray-500 mt-1">
                 Upload all relevant receipts and supporting documents (PDF or images)
               </p>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="rounded-lg bg-gray-50 p-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Existing Expenses:</span>
+                <span className="font-medium">
+                  ${(
+                    claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
+                    claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
+                  ).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Additional Expenses:</span>
+                <span className="font-medium">
+                  ${(
+                    travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
+                    expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
+                  ).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Advance Amount:</span>
+                <span className="font-medium">${claim.advanceAmount.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between items-center text-lg">
+                  <span className="font-semibold">Final Balance:</span>
+                  <span className={`font-bold ${calculateTotals().refundAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {calculateTotals().refundAmount > 0 ? 
+                      `Refund: $${calculateTotals().refundAmount.toFixed(2)}` :
+                      `Extra Claim: $${calculateTotals().extraClaimAmount.toFixed(2)}`}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

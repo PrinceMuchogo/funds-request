@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,32 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const mockClaims = [
-  {
-    id: "1",
-    activity: "Business Trip to New York",
-    amount: 1250.0,
-    status: "pending_checker",
-    date: "2024-03-20",
-    venue: "NYC Conference Center",
-  },
-  {
-    id: "2",
-    activity: "Training Workshop",
-    amount: 450.0,
-    status: "approved",
-    date: "2024-03-18",
-    venue: "Local Office",
-  },
-  {
-    id: "3",
-    activity: "Client Meeting",
-    amount: 300.0,
-    status: "pending_approval",
-    date: "2024-03-22",
-    venue: "Client HQ",
-  },
-];
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -58,18 +32,36 @@ const statusColors = {
 
 const statusOptions = [
   { value: "all", label: "All Claims" },
-  { value: "pending_checker", label: "Pending Checker" },
+  { value: "PENDING CHECKER", label: "Pending Checker" },
   { value: "pending_approval", label: "Pending Approval" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
 ];
 
 export default function Claims() {
-  const [claims] = useState(mockClaims);
+  const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { data: session } = useSession();
 
-  console.log("session: ", session)
+  useEffect(() => {
+    const getClaims = async () => {
+      try {
+        console.log("session: ", session?.user.id);
+        const response = await fetch(`/api/claim/get/${session?.user.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        setClaims(data);
+        console.log("claims: ", data);
+      } catch (error) {}
+    };
+
+    getClaims();
+  }, [session]);
 
   const filteredClaims = claims.filter(
     (claim) => statusFilter === "all" || claim.status === statusFilter,
@@ -100,7 +92,7 @@ export default function Claims() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray">
                 {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -130,7 +122,7 @@ export default function Claims() {
                     {claim.activity}
                   </TableCell>
                   <TableCell>{claim.venue}</TableCell>
-                  <TableCell>${claim.amount.toFixed(2)}</TableCell>
+                  <TableCell>${Number(claim.advanceAmount).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
@@ -142,7 +134,7 @@ export default function Claims() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(claim.date).toLocaleDateString()}
+                    {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <Button

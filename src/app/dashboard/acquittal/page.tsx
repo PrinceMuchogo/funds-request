@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,33 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const mockClaims = [
-  {
-    id: "1",
-    activity: "Business Trip to New York",
-    amount: 1250.00,
-    advanceAmount: 1500.00,
-    acquittedAmount: 1250.00,
-    refundAmount: 250.00,
-    status: "approved",
-    acquittalStatus: "pending",
-    date: "2024-03-20",
-    venue: "NYC Conference Center",
-  },
-  {
-    id: "2",
-    activity: "Training Workshop",
-    amount: 450.00,
-    advanceAmount: 400.00,
-    acquittedAmount: 450.00,
-    extraClaimAmount: 50.00,
-    status: "approved",
-    acquittalStatus: "completed",
-    date: "2024-03-18",
-    venue: "Local Office",
-  },
-];
+import { useSession } from "next-auth/react";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -62,32 +36,55 @@ const statusOptions = [
 ];
 
 export default function Acquittals() {
-  const [claims] = useState(mockClaims);
+  const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    const getClaims = async () => {
+      try {
+        console.log("session: ", session?.user.id);
+        const response = await fetch(`/api/claim/get/${session?.user.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        setClaims(data);
+        console.log("claims: ", data);
+      } catch (error) {}
+    };
+
+    getClaims();
+  }, [session]);
 
   const filteredClaims = claims.filter(
-    claim => statusFilter === "all" || claim.acquittalStatus === statusFilter
+    (claim) => statusFilter === "all" || claim.acquittalStatus === statusFilter,
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">Acquittals</h1>
-          <p className="text-gray-600 mt-1">Manage and track your expense acquittals</p>
+          <p className="mt-1 text-gray-600">
+            Manage and track your expense acquittals
+          </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 border-b">
+      <div className="overflow-hidden rounded-xl bg-white shadow-lg">
+        <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map(option => (
+              <SelectContent className="bg-gray">
+                {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -114,15 +111,21 @@ export default function Acquittals() {
             <TableBody>
               {filteredClaims.map((claim) => (
                 <TableRow key={claim.id}>
-                  <TableCell className="font-medium">{claim.activity}</TableCell>
+                  <TableCell className="font-medium">
+                    {claim.activity}
+                  </TableCell>
                   <TableCell>{claim.venue}</TableCell>
-                  <TableCell>${claim.advanceAmount.toFixed(2)}</TableCell>
-                  <TableCell>${claim.acquittedAmount.toFixed(2)}</TableCell>
+                  <TableCell>${Number(claim.advanceAmount).toFixed(2)}</TableCell>
+                  <TableCell>${Number(claim.acquittedAmount).toFixed(2)}</TableCell>
                   <TableCell>
                     {claim.refundAmount ? (
-                      <span className="text-red-600">-${claim.refundAmount.toFixed(2)}</span>
+                      <span className="text-red-600">
+                        -${Number(claim.refundAmount).toFixed(2)}
+                      </span>
                     ) : claim.extraClaimAmount ? (
-                      <span className="text-green-600">+${claim.extraClaimAmount.toFixed(2)}</span>
+                      <span className="text-green-600">
+                        +${Number(claim.extraClaimAmount).toFixed(2)}
+                      </span>
                     ) : (
                       "$0.00"
                     )}
@@ -130,21 +133,35 @@ export default function Acquittals() {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusColors[claim.acquittalStatus as keyof typeof statusColors]}
+                      className={
+                        statusColors[
+                          claim.acquittalStatus as keyof typeof statusColors
+                        ]
+                      }
                     >
-                      {claim.acquittalStatus.toUpperCase()}
+                      {claim.acquittalStatus?.toUpperCase()}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(claim.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {new Date(claim.createdAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell>
                     {claim.acquittalStatus === "pending" ? (
                       <Link href={`/dashboard/acquittal/${claim.id}`}>
-                        <Button variant="ghost" size="icon" className="hover:bg-blue-50">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-blue-50"
+                        >
                           <Receipt className="h-4 w-4 text-blue-600" />
                         </Button>
                       </Link>
                     ) : (
-                      <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-gray-100"
+                      >
                         <FileText className="h-4 w-4" />
                       </Button>
                     )}

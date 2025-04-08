@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -28,46 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const mockClaims = [
-  {
-    id: "1",
-    employee: "John Doe",
-    activity: "Business Trip to New York",
-    amount: 1250.00,
-    department: "Engineering",
-    date: "2024-03-20",
-    venue: "NYC Conference Center",
-    status: "pending_checker",
-    details: {
-      from: "2024-03-15",
-      to: "2024-03-20",
-      travelExpenses: [
-        {
-          fromPlace: "Office",
-          toPlace: "NYC",
-          dateDeparture: "2024-03-15T09:00",
-          dateArrived: "2024-03-15T14:00",
-          board: 200,
-          breakfast: 15,
-          lunch: 25,
-          dinner: 40,
-          fares: 150,
-          supper: 20,
-        }
-      ],
-      expertAllowances: [
-        {
-          designation: "Senior Engineer",
-          activity: "Technical Presentation",
-          allowance: 100,
-          units: 3,
-          rate: 50,
-        }
-      ]
-    }
-  },
-  // Add more mock claims as needed
-];
+
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -78,16 +39,36 @@ const statusColors = {
 
 const statusOptions = [
   { value: "all", label: "All Claims" },
-  { value: "pending_checker", label: "Pending Review" },
-  { value: "pending_approval", label: "In Progress" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "PENDING CHECKER", label: "Pending Review" },
+  { value: "PENDING APPROVAL", label: "In Progress" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
 export default function CheckerClaims() {
-  const [claims] = useState(mockClaims);
+  const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+  
+    useEffect(() => {
+      const getClaims = async () => {
+        try {
+          const response = await fetch("/api/claim/all", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+  
+          const data = await response.json();
+          setClaims(data)
+          console.log("claims: ", data)
+        } catch (error) {}
+      };
+  
+      getClaims();
+      console.log("claims: ", claims)
+    }, []);
 
   const filteredClaims = claims.filter(
     claim => statusFilter === "all" || claim.status === statusFilter
@@ -115,7 +96,7 @@ export default function CheckerClaims() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray">
                 {statusOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -142,13 +123,13 @@ export default function CheckerClaims() {
             <TableBody>
               {filteredClaims.map((claim) => (
                 <TableRow key={claim.id}>
-                  <TableCell className="font-medium">{claim.employee}</TableCell>
+                  <TableCell className="font-medium">{claim.user.name}</TableCell>
                   <TableCell>{claim.activity}</TableCell>
                   <TableCell className="hidden md:table-cell">{claim.venue}</TableCell>
-                  <TableCell>${claim.amount.toFixed(2)}</TableCell>
+                  <TableCell>${Number(claim.advanceAmount).toFixed(2)}</TableCell>
                   <TableCell className="hidden md:table-cell">{claim.department}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {new Date(claim.date).toLocaleDateString()}
+                    {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -171,15 +152,15 @@ export default function CheckerClaims() {
                                   <p><span className="text-gray-600">Activity:</span> {claim.activity}</p>
                                   <p><span className="text-gray-600">Venue:</span> {claim.venue}</p>
                                   <p><span className="text-gray-600">Department:</span> {claim.department}</p>
-                                  <p><span className="text-gray-600">Amount:</span> ${claim.amount.toFixed(2)}</p>
-                                  <p><span className="text-gray-600">Date:</span> {new Date(claim.date).toLocaleDateString()}</p>
+                                  <p><span className="text-gray-600">Amount:</span> ${Number(claim.advanceAmount).toFixed(2)}</p>
+                                  <p><span className="text-gray-600">Date:</span> {new Date(claim.createdAt).toLocaleDateString()}</p>
                                 </div>
                               </div>
                               <div>
                                 <h3 className="font-semibold">Period</h3>
                                 <div className="mt-2 space-y-2">
-                                  <p><span className="text-gray-600">From:</span> {new Date(claim.details.from).toLocaleDateString()}</p>
-                                  <p><span className="text-gray-600">To:</span> {new Date(claim.details.to).toLocaleDateString()}</p>
+                                  <p><span className="text-gray-600">From:</span> {new Date(claim.from).toLocaleDateString()}</p>
+                                  <p><span className="text-gray-600">To:</span> {new Date(claim.to).toLocaleDateString()}</p>
                                 </div>
                               </div>
                             </div>
@@ -198,7 +179,7 @@ export default function CheckerClaims() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {claim.details.travelExpenses.map((expense, index) => (
+                                    {claim.travellingAndSubsistence.map((expense: any, index: number) => (
                                       <TableRow key={index}>
                                         <TableCell>{expense.fromPlace}</TableCell>
                                         <TableCell>{expense.toPlace}</TableCell>
@@ -228,7 +209,7 @@ export default function CheckerClaims() {
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {claim.details.expertAllowances.map((allowance, index) => (
+                                    {claim.expertAndAdministrationAllowances.map((allowance: any, index: number) => (
                                       <TableRow key={index}>
                                         <TableCell>{allowance.designation}</TableCell>
                                         <TableCell>{allowance.activity}</TableCell>
