@@ -180,6 +180,7 @@ export default function SignUp() {
               onChange={handleChange}
             >
               <option value="checker">Checker</option>
+              <option value="checker">Checker</option>
               <option value="approver">Approver</option>
               <option value="admin">Admin</option>
             </select>

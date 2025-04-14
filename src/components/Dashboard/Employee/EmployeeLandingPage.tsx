@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Filter, Receipt } from "lucide-react";
+import { FileText, Plus, Filter } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,22 +21,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSession } from "next-auth/react";
+
 
 const statusColors = {
-  pending: "bg-yellow-100 text-yellow-800",
-  completed: "bg-green-100 text-green-800",
+  pending_checker: "bg-yellow-100 text-yellow-800",
+  pending_approval: "bg-blue-100 text-blue-800",
+  approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
 };
 
 const statusOptions = [
-  { value: "all", label: "All Acquittals" },
-  { value: "PENDING", label: "Pending" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "REJECTED", label: "Rejected" },
+  { value: "all", label: "All Claims" },
+  { value: "PENDING CHECKER", label: "Pending Checker" },
+  { value: "pending_approval", label: "Pending Approval" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
 ];
 
-export default function Acquittals() {
+export default function EployeeLandingPage() {
   const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { data: session } = useSession();
@@ -61,18 +64,24 @@ export default function Acquittals() {
   }, [session]);
 
   const filteredClaims = claims.filter(
-    (claim) => statusFilter === "all" || claim.acquittalStatus === statusFilter,
+    (claim) => statusFilter === "all" || claim.status === statusFilter,
   );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold">Acquittals</h1>
+          <h1 className="text-2xl font-bold">My Claims</h1>
           <p className="mt-1 text-gray-600">
-            Manage and track your expense acquittals
+            Manage and track your expense claims
           </p>
         </div>
+        <Link href="/dashboard/claims/new">
+          <Button className="bg-blue-600 text-white hover:bg-blue-700">
+            <Plus className="mr-2 h-4 w-4" />
+            New Claim
+          </Button>
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-xl bg-white shadow-lg">
@@ -100,9 +109,7 @@ export default function Acquittals() {
               <TableRow>
                 <TableHead>Activity</TableHead>
                 <TableHead>Venue</TableHead>
-                <TableHead>Advance</TableHead>
-                <TableHead>Acquitted</TableHead>
-                <TableHead>Refund/Extra</TableHead>
+                <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Actions</TableHead>
@@ -115,62 +122,28 @@ export default function Acquittals() {
                     {claim.activity}
                   </TableCell>
                   <TableCell>{claim.venue}</TableCell>
-                  <TableCell>
-                    ${Number(claim.advanceAmount).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    ${Number(claim.acquittedAmount).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {claim.refundAmount ? (
-                      <span className="text-red-600">
-                        -${Number(claim.refundAmount).toFixed(2)}
-                      </span>
-                    ) : claim.extraClaimAmount ? (
-                      <span className="text-green-600">
-                        +${Number(claim.extraClaimAmount).toFixed(2)}
-                      </span>
-                    ) : (
-                      "$0.00"
-                    )}
-                  </TableCell>
+                  <TableCell>${Number(claim.advanceAmount).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
                       className={
-                        statusColors[
-                          claim.acquittalStatus as keyof typeof statusColors
-                        ]
+                        statusColors[claim.status as keyof typeof statusColors]
                       }
                     >
-                      {claim.acquittalStatus?.toUpperCase()}
+                      {claim.status.replace("_", " ").toUpperCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    {claim.acquittalStatus === "PENDING" &&(
-                      <Link href={`/dashboard/acquittal/${claim.id}`}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-blue-50"
-                        >
-                          <Receipt className="h-4 w-4 text-blue-600" />
-                        </Button>
-                      </Link>
-                    ) 
-                    // : (
-                    //   <Button
-                    //     variant="ghost"
-                    //     size="icon"
-                    //     className="hover:bg-gray-100"
-                    //   >
-                    //     <FileText className="h-4 w-4" />
-                    //   </Button>
-                    // )
-                    }
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-gray-100"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

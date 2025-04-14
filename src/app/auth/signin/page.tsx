@@ -34,25 +34,7 @@ export default function SignIn() {
       setIsLoading(false);
       toast.error(result.error);
     } else {
-      switch (session?.user.role) {
-        case "employee":
-          window.location.href = "/dashboard/claims";
-          break;
-
-        case "checker":
-          window.location.href = "/dashboard/checker/claims";
-          break;
-        case "approver":
-          window.location.href = "/dashboard/approver/claims";
-          break;
-        case "admin":
-          window.location.href = "/dashboard/admin/users";
-          break;
-        default:
-          break;
-      }
-
-      console.log("login id: ", session?.user.role);
+      router.push("/dashboard");
       setIsLoading(false);
       toast.success("Welcome ☺️");
     }
@@ -65,8 +47,8 @@ export default function SignIn() {
           <div className="flex justify-center">
             <CircleDollarSign className="h-12 w-12 text-blue-600" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Sign in to FundFlow
+          <h2 className="mt-6 text-xl font-bold text-gray-900">
+            Sign in to IPMS
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Or{" "}

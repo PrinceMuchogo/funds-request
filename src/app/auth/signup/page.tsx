@@ -72,7 +72,7 @@ export default function SignUp() {
           <CircleDollarSign className="mx-auto h-12 w-12 text-blue-600" />
           <h2 className="mt-4 text-2xl font-bold text-gray-900">Create Your Account</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Already have an account? <Link href="/signin" className="text-blue-600 hover:underline">Sign in</Link>
+            Already have an account? <Link href="/auth/signin" className="text-blue-600 hover:underline">Sign in</Link>
           </p>
         </div>
 

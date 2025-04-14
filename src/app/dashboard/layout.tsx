@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const navigation = {
   employee: [
@@ -25,12 +26,28 @@ const navigation = {
     { name: "Profile", href: "/dashboard/profile", icon: Settings },
   ],
   checker: [
-    { name: "Pending Claims", href: "/dashboard/checker/claims", icon: ClipboardList },
-    { name: "Pending Acquittals", href: "/dashboard/checker/acquittals", icon: Receipt },
+    {
+      name: "Pending Claims",
+      href: "/dashboard/checker/claims",
+      icon: ClipboardList,
+    },
+    {
+      name: "Pending Acquittals",
+      href: "/dashboard/checker/acquittals",
+      icon: Receipt,
+    },
   ],
   approver: [
-    { name: "Pending Approvals", href: "/dashboard/approver/claims", icon: ClipboardList },
-    { name: "Pending Acquittals", href: "/dashboard/approver/acquittals", icon: Receipt },
+    {
+      name: "Pending Approvals",
+      href: "/dashboard/approver/claims",
+      icon: ClipboardList,
+    },
+    {
+      name: "Pending Acquittals",
+      href: "/dashboard/approver/acquittals",
+      icon: Receipt,
+    },
   ],
   admin: [
     { name: "User Management", href: "/dashboard/admin/users", icon: Users },
@@ -42,17 +59,19 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const {data:session}=useSession()
+  const { data: session } = useSession();
   const pathname = usePathname();
   const role = session?.user.role; // TODO: Get from auth context
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const router = useRouter();
+
 
   return (
     <div className="flex min-h-screen">
       {/* Mobile sidebar backdrop */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -60,26 +79,20 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 bg-white border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-30 w-64 transform border-r bg-white transition-transform duration-200 ease-in-out lg:static lg:z-auto lg:translate-x-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 items-center px-6 border-b">
-          <Link href="/" className="flex items-center space-x-2">
-            <CircleDollarSign className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-bold text-blue-600">FundFlow</span>
-          </Link>
-        </div>
         <nav className="px-4 py-4">
           {navigation[role as keyof typeof navigation]?.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center space-x-2 px-4 py-2 text-sm rounded-lg mb-1 transition-colors",
+                "mb-1 flex items-center space-x-2 rounded-lg px-4 py-2 text-sm transition-colors",
                 pathname === item.href
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-gray-50"
+                  : "text-gray-700 hover:bg-gray-50",
               )}
               onClick={() => setIsSidebarOpen(false)}
             >
@@ -91,9 +104,9 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 overflow-auto">
+      <div className="min-w-0 flex-1 overflow-auto">
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-white">
+        <div className="flex items-center justify-between border-b bg-white p-4 lg:hidden">
           <Link href="/" className="flex items-center space-x-2">
             <CircleDollarSign className="h-6 w-6 text-blue-600" />
             <span className="text-xl font-bold text-blue-600">FundFlow</span>
@@ -111,9 +124,7 @@ export default function DashboardLayout({
           </Button>
         </div>
 
-        <div className="py-6 px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
+        <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
       </div>
     </div>
   );

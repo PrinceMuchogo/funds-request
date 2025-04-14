@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -28,8 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -40,24 +37,16 @@ const statusColors = {
 
 const statusOptions = [
   { value: "all", label: "All Claims" },
-  { value: "PENDING APPROVAL", label: "Pending Approval" },
+  { value: "PENDING CHECKER", label: "Pending Review" },
+  { value: "PENDING APPROVAL", label: "In Progress" },
   { value: "APPROVED", label: "Approved" },
   { value: "REJECTED", label: "Rejected" },
 ];
 
-export default function ApproverClaims() {
+export default function CheckerLandingPage() {
   const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
-  const [selectedClaim, setSelectedClaim] = useState<any>(null);
-  const [comment, setComment] = useState("");
-  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [viewDialogComment, setViewDialogComment] = useState("");
 
   useEffect(() => {
     const getClaims = async () => {
@@ -71,90 +60,30 @@ export default function ApproverClaims() {
 
         const data = await response.json();
         setClaims(data);
-      } catch (error) {
-        console.error("Error fetching claims:", error);
-      }
+        console.log("claims: ", data);
+      } catch (error) {}
     };
 
     getClaims();
+    console.log("claims: ", claims);
   }, []);
 
   const filteredClaims = claims.filter(
     (claim) => statusFilter === "all" || claim.status === statusFilter,
   );
 
-  const handleActionClick = (claim: any, action: "approve" | "reject") => {
-    setSelectedClaim(claim);
-    setActionType(action);
-    setComment("");
-    setIsActionDialogOpen(true);
-  };
-
-  const handleActionSubmit = async (
-    fromDialog: "action" | "view" = "action",
-  ) => {
-    if (!selectedClaim || !actionType) return;
-    const commentText = fromDialog === "action" ? comment : viewDialogComment;
-    if (!commentText.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/claim/${selectedClaim.id}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: actionType === "approve" ? "APPROVED" : "REJECTED",
-          comment: commentText,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to update claim");
-
-      // Update local state
-      setClaims(
-        claims.map((claim) =>
-          claim.id === selectedClaim.id
-            ? {
-                ...claim,
-                status: actionType === "approve" ? "APPROVED" : "REJECTED",
-              }
-            : claim,
-        ),
-      );
-
-      toast({
-        title: actionType === "approve" ? "Claim approved" : "Claim rejected",
-        description: `The claim has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update claim status. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      setIsActionDialogOpen(false);
-      setIsViewDialogOpen(false);
-      setSelectedClaim(null);
-      setActionType(null);
-      setComment("");
-      setViewDialogComment("");
-    }
-  };
-
-  const handleViewDialogAction = (action: "approve" | "reject") => {
-    setActionType(action);
-    handleActionSubmit("view");
+  const handleAction = (id: string, action: "approve" | "reject") => {
+    toast({
+      title: `Claim ${action}ed`,
+      description: `The claim has been ${action}ed and sent for final approval.`,
+    });
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Claims Pending Approval</h1>
-        <p className="mt-1 text-gray-600">Review and approve expense claims</p>
+        <h1 className="text-2xl font-bold">Claims Pending Review</h1>
+        <p className="mt-1 text-gray-600">Review and process expense claims</p>
       </div>
 
       <div className="overflow-hidden rounded-xl bg-white shadow-lg">
@@ -185,7 +114,7 @@ export default function ApproverClaims() {
                 <TableHead className="hidden md:table-cell">Venue</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Checked By
+                  Department
                 </TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead>Actions</TableHead>
@@ -205,28 +134,24 @@ export default function ApproverClaims() {
                     ${Number(claim.advanceAmount).toFixed(2)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {claim.checkedBy}
+                    {claim.department}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Dialog
-                        open={isViewDialogOpen}
-                        onOpenChange={setIsViewDialogOpen}
-                      >
+                      <Dialog>
                         <DialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="hover:bg-blue-50"
-                            onClick={() => setSelectedClaim(claim)}
                           >
                             <Eye className="h-4 w-4 text-blue-600" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto bg-white">
+                        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Claim Details</DialogTitle>
                           </DialogHeader>
@@ -266,12 +191,6 @@ export default function ApproverClaims() {
                                       Amount:
                                     </span>{" "}
                                     ${Number(claim.advanceAmount).toFixed(2)}
-                                  </p>
-                                  <p>
-                                    <span className="text-gray-600">
-                                      Checked By:
-                                    </span>{" "}
-                                    {claim.checkedBy}
                                   </p>
                                   <p>
                                     <span className="text-gray-600">Date:</span>{" "}
@@ -383,51 +302,6 @@ export default function ApproverClaims() {
                                 </Table>
                               </div>
                             </div>
-
-                            <div className="space-y-4 border-t pt-4">
-                              <div className="grid gap-2">
-                                <Label htmlFor="viewComment">Comment</Label>
-                                <Textarea
-                                  id="viewComment"
-                                  value={viewDialogComment}
-                                  onChange={(e) =>
-                                    setViewDialogComment(e.target.value)
-                                  }
-                                  placeholder="Add your comments..."
-                                  className="min-h-[100px]"
-                                />
-                              </div>
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setIsViewDialogOpen(false)}
-                                  disabled={isLoading}
-                                >
-                                  Close
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={() =>
-                                    handleViewDialogAction("reject")
-                                  }
-                                  disabled={
-                                    isLoading || !viewDialogComment.trim()
-                                  }
-                                >
-                                  {isLoading ? "Processing..." : "Reject"}
-                                </Button>
-                                <Button
-                                  onClick={() =>
-                                    handleViewDialogAction("approve")
-                                  }
-                                  disabled={
-                                    isLoading || !viewDialogComment.trim()
-                                  }
-                                >
-                                  {isLoading ? "Processing..." : "Approve"}
-                                </Button>
-                              </div>
-                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -435,7 +309,7 @@ export default function ApproverClaims() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleActionClick(claim, "approve")}
+                        onClick={() => handleAction(claim.id, "approve")}
                         className="text-green-600 hover:bg-green-50"
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -443,7 +317,7 @@ export default function ApproverClaims() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleActionClick(claim, "reject")}
+                        onClick={() => handleAction(claim.id, "reject")}
                         className="text-red-600 hover:bg-red-50"
                       >
                         <XCircle className="h-4 w-4" />
@@ -456,53 +330,6 @@ export default function ApproverClaims() {
           </Table>
         </div>
       </div>
-
-      {/* Action Dialog */}
-      <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
-        <DialogContent className="bg-white sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              {actionType === "approve" ? "Approve Claim" : "Reject Claim"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="comment">Comment</Label>
-              <Textarea
-                id="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={
-                  actionType === "approve"
-                    ? "Add approval comments..."
-                    : "Reason for rejection..."
-                }
-                className="min-h-[100px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsActionDialogOpen(false)}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={actionType === "approve" ? "default" : "destructive"}
-              onClick={() => handleActionSubmit("action")}
-              disabled={isLoading || !comment.trim()}
-            >
-              {isLoading
-                ? "Processing..."
-                : actionType === "approve"
-                  ? "Approve"
-                  : "Reject"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

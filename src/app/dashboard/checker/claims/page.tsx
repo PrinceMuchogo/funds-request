@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -27,8 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -49,40 +50,89 @@ export default function CheckerClaims() {
   const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [comment, setComment] = useState("");
+  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<"review" | "reject" | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-    useEffect(() => {
-      const getClaims = async () => {
-        try {
-          const response = await fetch("/api/claim/all", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-  
-          const data = await response.json();
-          setClaims(data)
-          console.log("claims: ", data)
-        } catch (error) {}
-      };
-  
-      getClaims();
-      console.log("claims: ", claims)
-    }, []);
+  useEffect(() => {
+    const getClaims = async () => {
+      try {
+        const response = await fetch("/api/claim/all", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        setClaims(data);
+      } catch (error) {
+        console.error("Error fetching claims:", error);
+      }
+    };
+
+    getClaims();
+  }, []);
 
   const filteredClaims = claims.filter(
     claim => statusFilter === "all" || claim.status === statusFilter
   );
 
-  const handleAction = (id: string, action: "approve" | "reject") => {
-    toast({
-      title: `Claim ${action}ed`,
-      description: `The claim has been ${action}ed and sent for final approval.`,
-    });
+  const handleActionClick = (claim: any, action: "review" | "reject") => {
+    setSelectedClaim(claim);
+    setActionType(action);
+    setComment("");
+    setIsActionDialogOpen(true);
+  };
+
+  const handleActionSubmit = async () => {
+    if (!selectedClaim || !actionType || !comment.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/claim/${selectedClaim.id}/review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: actionType === "review" ? "PENDING_APPROVAL" : "REJECTED",
+          comment,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update claim");
+
+      // Update local state
+      setClaims(claims.map(claim => 
+        claim.id === selectedClaim.id 
+          ? { ...claim, status: actionType === "review" ? "PENDING_APPROVAL" : "REJECTED" }
+          : claim
+      ));
+
+      toast({
+        title: actionType === "review" ? "Claim reviewed" : "Claim rejected",
+        description: `The claim has been ${actionType === "review" ? "reviewed and sent for approval" : "rejected"}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update claim status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsActionDialogOpen(false);
+      setSelectedClaim(null);
+      setActionType(null);
+      setComment("");
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-black">
       <div>
         <h1 className="text-2xl font-bold">Claims Pending Review</h1>
         <p className="text-gray-600 mt-1">Review and process expense claims</p>
@@ -139,28 +189,28 @@ export default function CheckerClaims() {
                             <Eye className="h-4 w-4 text-blue-600" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogContent className="max-w-4xl max-h-[80vh] bg-white overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Claim Details</DialogTitle>
                           </DialogHeader>
-                          <div className="mt-4 space-y-6">
+                          <div className="mt-4 space-y-6 bg-white">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <h3 className="font-semibold">Basic Information</h3>
                                 <div className="mt-2 space-y-2">
-                                  <p><span className="text-gray-600">Employee:</span> {claim.employee}</p>
-                                  <p><span className="text-gray-600">Activity:</span> {claim.activity}</p>
-                                  <p><span className="text-gray-600">Venue:</span> {claim.venue}</p>
-                                  <p><span className="text-gray-600">Department:</span> {claim.department}</p>
-                                  <p><span className="text-gray-600">Amount:</span> ${Number(claim.advanceAmount).toFixed(2)}</p>
-                                  <p><span className="text-gray-600">Date:</span> {new Date(claim.createdAt).toLocaleDateString()}</p>
+                                  <p><span className="text-black">Employee:</span> {claim.employee}</p>
+                                  <p><span className="text-black">Activity:</span> {claim.activity}</p>
+                                  <p><span className="text-black">Venue:</span> {claim.venue}</p>
+                                  <p><span className="text-black">Department:</span> {claim.department}</p>
+                                  <p><span className="text-black">Amount:</span> ${Number(claim.advanceAmount).toFixed(2)}</p>
+                                  <p><span className="text-black">Date:</span> {new Date(claim.createdAt).toLocaleDateString()}</p>
                                 </div>
                               </div>
                               <div>
                                 <h3 className="font-semibold">Period</h3>
                                 <div className="mt-2 space-y-2">
-                                  <p><span className="text-gray-600">From:</span> {new Date(claim.from).toLocaleDateString()}</p>
-                                  <p><span className="text-gray-600">To:</span> {new Date(claim.to).toLocaleDateString()}</p>
+                                  <p><span className="text-black">From:</span> {new Date(claim.from).toLocaleDateString()}</p>
+                                  <p><span className="text-black">To:</span> {new Date(claim.to).toLocaleDateString()}</p>
                                 </div>
                               </div>
                             </div>
@@ -229,7 +279,7 @@ export default function CheckerClaims() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleAction(claim.id, "approve")}
+                        onClick={() => handleActionClick(claim, "review")}
                         className="text-green-600 hover:bg-green-50"
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -237,7 +287,7 @@ export default function CheckerClaims() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleAction(claim.id, "reject")}
+                        onClick={() => handleActionClick(claim, "reject")}
                         className="text-red-600 hover:bg-red-50"
                       >
                         <XCircle className="h-4 w-4" />
@@ -250,6 +300,45 @@ export default function CheckerClaims() {
           </Table>
         </div>
       </div>
+
+      {/* Action Dialog */}
+      <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "review" ? "Review Claim" : "Reject Claim"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="comment">Comment</Label>
+              <Textarea
+                id="comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={actionType === "review" ? "Add review comments..." : "Reason for rejection..."}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsActionDialogOpen(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={actionType === "review" ? "default" : "destructive"}
+              onClick={handleActionSubmit}
+              disabled={isLoading || !comment.trim()}
+            >
+              {isLoading ? "Processing..." : actionType === "review" ? "Submit Review" : "Reject Claim"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
