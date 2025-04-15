@@ -227,8 +227,8 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
 
     try {
       // TODO: Replace with your actual API endpoint
-      const response = await fetch('/api/acquittals', {
-        method: 'POST',
+      const response = await fetch(`/api/acquittal/add/${params.id}`, {
+        method: 'PUT',
         body: formData,
       });
 

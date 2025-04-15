@@ -97,8 +97,6 @@ model ExpertAndAdministrationAllowance {
 model SupportingDocument {
   id          String     @id @default(uuid())
   url String?
-  name String?
-  type String?
   claimId     String?
   claim       ClaimForm? @relation(fields: [claimId], references: [id])
   createdAt   DateTime   @default(now())

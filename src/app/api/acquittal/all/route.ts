@@ -13,6 +13,7 @@ export async function GET(req: Request) {
         expertAndAdministrationAllowances: true,
         travellingAndSubsistence: true,
         user: true,
+        SupportingDocuments: true
       },
     });
 

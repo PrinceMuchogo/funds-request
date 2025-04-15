@@ -349,7 +349,7 @@ export default function ApproverAcquittals() {
                             <div>
                               <h3 className="font-semibold mb-2">Supporting Documents</h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {acquittal.documents?.map((doc: any, index: number) => (
+                                {acquittal.SupportingDocuments?.map((doc: any, index: number) => (
                                   <div key={index} className="flex items-center gap-2 p-2 border rounded">
                                     <FileText className="h-4 w-4 text-blue-600" />
                                     <a
@@ -358,7 +358,7 @@ export default function ApproverAcquittals() {
                                       rel="noopener noreferrer"
                                       className="text-blue-600 hover:underline"
                                     >
-                                      {doc.name}
+                                      Document {index+1}
                                     </a>
                                   </div>
                                 ))}
