@@ -54,6 +54,7 @@ model ClaimForm {
   extraClaimAmount                  Float?                             @default(0) // NEW: Stores the amount to be reimbursed (if expenses > advance)
   travellingAndSubsistence          TravellingAndSubsistence[]
   expertAndAdministrationAllowances ExpertAndAdministrationAllowance[]
+  SupportingDocuments SupportingDocument[]
   createdAt                         DateTime                           @default(now())
   updatedAt                         DateTime                           @updatedAt
 }
@@ -91,4 +92,16 @@ model ExpertAndAdministrationAllowance {
   total       Float?     @default(0)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+model SupportingDocument {
+  id          String     @id @default(uuid())
+  url String?
+  name String?
+  type String?
+  claimId     String?
+  claim       ClaimForm? @relation(fields: [claimId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
 }

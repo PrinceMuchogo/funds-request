@@ -93,6 +93,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [claim] = useState(mockClaim);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([{
     day: claim.travelExpenses.length + 1,
     fromPlace: "",
@@ -206,22 +207,56 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
     
     const totals = calculateTotals();
 
-    // TODO: Implement acquittal submission
-    console.log({
+    // Create FormData instance to handle file uploads
+    const formData = new FormData();
+
+    // Add all files to FormData
+    if (files) {
+      Array.from(files).forEach((file, index) => {
+        formData.append(`supportingDocuments`, file);
+      });
+    }
+
+    // Add other data as JSON string
+    formData.append('data', JSON.stringify({
       claimId: params.id,
       ...totals,
       newTravelExpenses: travelExpenses,
       newExpertAllowances: expertAllowances,
-    });
+    }));
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // TODO: Replace with your actual API endpoint
+      const response = await fetch('/api/acquittals', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit acquittal');
+      }
+
       toast({
         title: "Acquittal submitted successfully",
         description: "Your acquittal has been sent for review.",
       });
+      
       // router.push("/claims");
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: "Error submitting acquittal",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(e.target.files);
+    }
   };
 
   return (
@@ -631,6 +666,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 multiple
                 accept="image/*,.pdf"
                 className="mt-2"
+                onChange={handleFileChange}
                 required
               />
               <p className="text-sm text-gray-500 mt-1">

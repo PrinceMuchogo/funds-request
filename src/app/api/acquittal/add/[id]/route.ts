@@ -6,7 +6,11 @@ interface Params {
 
 export async function PUT(req: Request, { params }: { params: Params }) {
   try {
-    const data = await req.json();
+    
+    const formData = await req.formData();
+    const data = formData.get("data") as any;
+    const productImages = formData.getAll("supportingDocuments") as File[];
+
 
     const claimData = {
       status: data.status,
@@ -22,7 +26,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     });
 
     if (!find_claim) {
-      return new Response(JSON.stringify({ message: "Claim Not Found!" }), {
+      return new Response(JSON.stringify({ message: "Acquittal Not Found!" }), {
         status: 404,
       });
     }
@@ -35,12 +39,12 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     if (updated_claim) {
       // Return the processed data
       return new Response(
-        JSON.stringify({ message: "Claim updated successfully" }),
+        JSON.stringify({ message: "Acquittal updated successfully" }),
         { status: 200 },
       );
     }
 
-    return new Response(JSON.stringify({ message: "Failed to update claim" }), {
+    return new Response(JSON.stringify({ message: "Failed to update Acquittal" }), {
       status: 400,
     });
   } catch (error) {
