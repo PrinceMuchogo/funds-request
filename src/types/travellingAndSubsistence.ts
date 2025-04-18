@@ -17,3 +17,4 @@ export type TravellingAndSubsistence = {
   createdAt: Date
   updatedAt: Date
 }
+

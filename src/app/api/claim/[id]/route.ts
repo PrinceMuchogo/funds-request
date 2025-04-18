@@ -1,24 +1,25 @@
 import prisma from "@/utils/dbconfig";
 
-export async function GET(req: Request) {
+interface Params {
+  id: string;
+}
+
+export async function GET(req: Request, { params }: { params: Params }) {
   try {
-    const claims = await prisma.claimForm.findMany({
+    const id = params.id;
+    const claim = await prisma.claimForm.findUnique({
       where: {
-        acquittalStatus: {
-          not: null,
-          notIn: ["NOT SET"],
-        },
+        id,
       },
       include: {
         expertAndAdministrationAllowances: true,
         travellingAndSubsistence: true,
         user: true,
-        SupportingDocuments: true,
         checker: true
       },
     });
 
-    return new Response(JSON.stringify(claims), { status: 201 });
+    return new Response(JSON.stringify(claim), { status: 201 });
   } catch (error) {
     return new Response(JSON.stringify({ message: "Internal Servor Error" }), {
       status: 500,

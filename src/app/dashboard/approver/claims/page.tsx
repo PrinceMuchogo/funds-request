@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, FileText, Filter, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useSession } from "next-auth/react";
+import { toast } from "react-toastify";
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -39,16 +40,15 @@ const statusColors = {
 };
 
 const statusOptions = [
-  { value: "all", label: "All Claims" },
+  // { value: "all", label: "All Claims" },
   { value: "PENDING APPROVAL", label: "Pending Approval" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
+  // { value: "APPROVED", label: "Approved" },
+  // { value: "REJECTED", label: "Rejected" },
 ];
 
 export default function ApproverClaims() {
   const [claims, setClaims] = useState<any[]>([]);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = useState("PENDING APPROVAL");
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [comment, setComment] = useState("");
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
@@ -58,6 +58,7 @@ export default function ApproverClaims() {
   const [isLoading, setIsLoading] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [viewDialogComment, setViewDialogComment] = useState("");
+  const {data:session} = useSession()
 
   useEffect(() => {
     const getClaims = async () => {
@@ -99,14 +100,15 @@ export default function ApproverClaims() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/claim/${selectedClaim.id}/approve`, {
-        method: "POST",
+      const response = await fetch(`/api/claim/approval/${selectedClaim.id}/`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           status: actionType === "approve" ? "APPROVED" : "REJECTED",
           comment: commentText,
+          userId: session?.user.id
         }),
       });
 
@@ -124,16 +126,10 @@ export default function ApproverClaims() {
         ),
       );
 
-      toast({
-        title: actionType === "approve" ? "Claim approved" : "Claim rejected",
-        description: `The claim has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`,
-      });
+      toast.success( `The claim has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update claim status. Please try again.",
-        variant: "destructive",
-      });
+      console.log("error: ", error)
+      toast.error("Failed to update claim status. Please try again.");
     } finally {
       setIsLoading(false);
       setIsActionDialogOpen(false);
@@ -205,7 +201,7 @@ export default function ApproverClaims() {
                     ${Number(claim.advanceAmount).toFixed(2)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {claim.checkedBy}
+                    {claim.checker.name}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {new Date(claim.createdAt).toLocaleDateString()}
@@ -271,7 +267,7 @@ export default function ApproverClaims() {
                                     <span className="text-gray-600">
                                       Checked By:
                                     </span>{" "}
-                                    {claim.checkedBy}
+                                    {claim.checker.name}
                                   </p>
                                   <p>
                                     <span className="text-gray-600">Date:</span>{" "}

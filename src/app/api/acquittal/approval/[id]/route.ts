@@ -17,14 +17,14 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     });
 
     if (!find_claim) {
-      return new Response(JSON.stringify({ message: "Claim Not Found!" }), {
+      return new Response(JSON.stringify({ message: "Acquittal Not Found!" }), {
         status: 404,
       });
     }
 
     
     if (!data.userId) {
-      return new Response(JSON.stringify({ message: "Please sign in to update claims!" }), {
+      return new Response(JSON.stringify({ message: "Please sign in to update acquittal!" }), {
         status: 404,
       });
     }
@@ -37,16 +37,15 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     });
 
     if (!find_checker) {
-      return new Response(JSON.stringify({ message: "Checker Not Found!" }), {
+      return new Response(JSON.stringify({ message: "Approver Not Found!" }), {
         status: 404,
       });
     }
 
     
     const claimData = {
-      status: data.status,
       comment: data.comment,
-      checkedBy: data.userId,
+      acquittalStatus: data.status
     };
 
     const updated_claim = await prisma.claimForm.update({
@@ -57,12 +56,12 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     if (updated_claim) {
       // Return the processed data
       return new Response(
-        JSON.stringify({ message: "Claim updated successfully" }),
+        JSON.stringify({ message: "Acquittal updated successfully" }),
         { status: 200 },
       );
     }
 
-    return new Response(JSON.stringify({ message: "Failed to update claim" }), {
+    return new Response(JSON.stringify({ message: "Failed to update acquittal" }), {
       status: 400,
     });
   } catch (error) {

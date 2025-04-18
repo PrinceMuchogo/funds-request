@@ -6,7 +6,8 @@ export async function GET(req: Request) {
       include: {
         expertAndAdministrationAllowances: true,
         travellingAndSubsistence: true,
-        user: true
+        user: true,
+        checker: true
       },
     });
 

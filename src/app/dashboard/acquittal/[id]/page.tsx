@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
   Calendar,
@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Claim } from "@/types/claim";
+import { toast } from "react-toastify";
 
 type TravellingExpense = {
   day: number;
@@ -56,7 +58,7 @@ const mockClaim = {
   from: "2024-03-15",
   to: "2024-03-20",
   venue: "NYC Conference Center",
-  advanceAmount: 1500.00,
+  advanceAmount: 1500.0,
   status: "approved",
   acquittalStatus: "pending",
   travelExpenses: [
@@ -73,7 +75,7 @@ const mockClaim = {
       fares: 150,
       supper: 20,
       total: 450,
-    }
+    },
   ],
   expertAllowances: [
     {
@@ -84,72 +86,21 @@ const mockClaim = {
       units: 3,
       rate: 50,
       total: 150,
-    }
-  ]
+    },
+  ],
 };
 
 export default function AcquittalForm({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { toast } = useToast();
+  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-  const [claim] = useState(mockClaim);
+  const [claim, setClaim] = useState<Claim>();
+  const [travelLength, setTravelLength] = useState(0);
+  const [allowanceLength, setAllowanceLength] = useState(0);
   const [files, setFiles] = useState<FileList | null>(null);
-  const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([{
-    day: claim.travelExpenses.length + 1,
-    fromPlace: "",
-    toPlace: "",
-    dateDeparture: "",
-    dateArrived: "",
-    board: 0,
-    breakfast: 0,
-    lunch: 0,
-    dinner: 0,
-    fares: 0,
-    supper: 0,
-    total: 0,
-  }]);
-  const [expertAllowances, setExpertAllowances] = useState<ExpertAllowance[]>([{
-    day: claim.expertAllowances.length + 1,
-    designation: "",
-    activity: "",
-    allowance: 0,
-    units: 0,
-    rate: 0,
-    total: 0,
-  }]);
-
-  const calculateTravelExpenseTotal = (expense: TravellingExpense) => {
-    return expense.board + expense.breakfast + expense.lunch + 
-           expense.dinner + expense.fares + expense.supper;
-  };
-
-  const calculateExpertAllowanceTotal = (allowance: ExpertAllowance) => {
-    return allowance.units * allowance.rate;
-  };
-
-  const updateTravelExpense = (index: number, field: keyof TravellingExpense, value: any) => {
-    const updatedExpenses = [...travelExpenses];
-    updatedExpenses[index] = {
-      ...updatedExpenses[index],
-      [field]: value,
-      total: field === 'total' ? value : calculateTravelExpenseTotal(updatedExpenses[index])
-    };
-    setTravelExpenses(updatedExpenses);
-  };
-
-  const updateExpertAllowance = (index: number, field: keyof ExpertAllowance, value: any) => {
-    const updatedAllowances = [...expertAllowances];
-    updatedAllowances[index] = {
-      ...updatedAllowances[index],
-      [field]: value,
-      total: field === 'total' ? value : calculateExpertAllowanceTotal(updatedAllowances[index])
-    };
-    setExpertAllowances(updatedAllowances);
-  };
-
-  const addTravelExpense = () => {
-    setTravelExpenses([...travelExpenses, {
-      day: claim.travelExpenses.length + travelExpenses.length + 1,
+  const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([
+    {
+      day: claim?.travellingAndSubsistence.length! + 1,
       fromPlace: "",
       toPlace: "",
       dateDeparture: "",
@@ -161,19 +112,128 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
       fares: 0,
       supper: 0,
       total: 0,
-    }]);
-  };
+    },
+  ]);
 
-  const addExpertAllowance = () => {
-    setExpertAllowances([...expertAllowances, {
-      day: claim.expertAllowances.length + expertAllowances.length + 1,
+  useEffect(() => {
+    const getClaims = async () => {
+      try {
+        const response = await fetch(`/api/claim/${params.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        console.log("claim: ", data);
+        setClaim(data);
+        setAllowanceLength(data.expertAndAdministrationAllowances.length);
+        setTravelLength(data.travellingAndSubsistence.length);
+      } catch (error) {}
+    };
+
+    getClaims();
+  }, [session]);
+  const [expertAllowances, setExpertAllowances] = useState<ExpertAllowance[]>([
+    {
+      day: claim?.expertAndAdministrationAllowances.length! + 1,
       designation: "",
       activity: "",
       allowance: 0,
       units: 0,
       rate: 0,
       total: 0,
-    }]);
+    },
+  ]);
+
+  const calculateTravelExpenseTotal = (expense: TravellingExpense) => {
+    return (
+      expense.board +
+      expense.breakfast +
+      expense.lunch +
+      expense.dinner +
+      expense.fares +
+      expense.supper
+    );
+  };
+
+  const calculateExpertAllowanceTotal = (allowance: ExpertAllowance) => {
+    return allowance.units * allowance.rate;
+  };
+
+  const updateTravelExpense = (
+    index: number,
+    field: keyof TravellingExpense,
+    value: any,
+  ) => {
+    const updatedExpenses = [...travelExpenses];
+    updatedExpenses[index] = {
+      ...updatedExpenses[index],
+      [field]: value,
+      total:
+        field === "total"
+          ? value
+          : calculateTravelExpenseTotal(updatedExpenses[index]),
+    };
+    setTravelExpenses(updatedExpenses);
+  };
+
+  const updateExpertAllowance = (
+    index: number,
+    field: keyof ExpertAllowance,
+    value: any,
+  ) => {
+    const updatedAllowances = [...expertAllowances];
+    updatedAllowances[index] = {
+      ...updatedAllowances[index],
+      [field]: value,
+      total:
+        field === "total"
+          ? value
+          : calculateExpertAllowanceTotal(updatedAllowances[index]),
+    };
+    setExpertAllowances(updatedAllowances);
+  };
+
+  const addTravelExpense = () => {
+    setTravelExpenses([
+      ...travelExpenses,
+      {
+        day:
+          claim?.travellingAndSubsistence.length! + travelExpenses.length + 1,
+        fromPlace: "",
+        toPlace: "",
+        dateDeparture: "",
+        dateArrived: "",
+        board: 0,
+        breakfast: 0,
+        lunch: 0,
+        dinner: 0,
+        fares: 0,
+        supper: 0,
+        total: 0,
+      },
+    ]);
+  };
+
+  const addExpertAllowance = () => {
+    setExpertAllowances([
+      ...expertAllowances,
+      {
+        day:
+          claim?.expertAndAdministrationAllowances.length! +
+          expertAllowances.length +
+          1,
+        designation: "",
+        activity: "",
+        allowance: 0,
+        units: 0,
+        rate: 0,
+        total: 0,
+      },
+    ]);
   };
 
   const removeTravelExpense = (index: number) => {
@@ -185,14 +245,31 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   };
 
   const calculateTotals = () => {
-    const existingTravelTotal = claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0);
-    const newTravelTotal = travelExpenses.reduce((acc, curr) => acc + curr.total, 0);
+    const existingTravelTotal = claim?.travellingAndSubsistence!.reduce(
+      (acc, curr) => acc + Number(curr.total),
+      0,
+    );
+    const newTravelTotal = travelExpenses.reduce(
+      (acc, curr) => acc + curr.total,
+      0,
+    );
 
-    const existingAllowanceTotal = claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0);
-    const newAllowanceTotal = expertAllowances.reduce((acc, curr) => acc + curr.total, 0);
+    const existingAllowanceTotal =
+      claim?.expertAndAdministrationAllowances!.reduce(
+        (acc, curr) => acc + Number(curr.total),
+        0,
+      );
+    const newAllowanceTotal = expertAllowances.reduce(
+      (acc, curr) => acc + curr.total,
+      0,
+    );
 
-    const totalExpenses = existingTravelTotal + newTravelTotal + existingAllowanceTotal + newAllowanceTotal;
-    const difference = totalExpenses - claim.advanceAmount;
+    const totalExpenses =
+      existingTravelTotal! +
+      newTravelTotal +
+      existingAllowanceTotal! +
+      newAllowanceTotal;
+    const difference = totalExpenses - claim?.advanceAmount!;
 
     return {
       acquittedAmount: totalExpenses,
@@ -204,7 +281,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const totals = calculateTotals();
 
     // Create FormData instance to handle file uploads
@@ -218,36 +295,31 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
     }
 
     // Add other data as JSON string
-    formData.append('data', JSON.stringify({
-      claimId: params.id,
-      ...totals,
-      newTravelExpenses: travelExpenses,
-      newExpertAllowances: expertAllowances,
-    }));
+    formData.append(
+      "data",
+      JSON.stringify({
+        claimId: params.id,
+        ...totals,
+        newTravelExpenses: travelExpenses,
+        newExpertAllowances: expertAllowances,
+      }),
+    );
 
     try {
       // TODO: Replace with your actual API endpoint
       const response = await fetch(`/api/acquittal/add/${params.id}`, {
-        method: 'PUT',
+        method: "PUT",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit acquittal');
+        throw new Error("Failed to submit acquittal");
       }
 
-      toast({
-        title: "Acquittal submitted successfully",
-        description: "Your acquittal has been sent for review.",
-      });
-      
-      // router.push("/claims");
+      router.push("/dashboard/acquittal");
+      toast.success("Your acquittal has been sent for review.");
     } catch (error) {
-      toast({
-        title: "Error submitting acquittal",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      toast("Failed. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -260,41 +332,47 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="overflow-hidden rounded-xl bg-white shadow-lg">
         <div className="bg-blue-600 p-6">
           <h1 className="text-2xl font-bold text-white">Acquittal Form</h1>
-          <p className="text-blue-100 mt-2">Update your claim with actual expenses</p>
+          <p className="mt-2 text-blue-100">
+            Update your claim with actual expenses
+          </p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-8">
+
+        <form onSubmit={handleSubmit} className="space-y-8 p-6">
           {/* Original Claim Details */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold mb-4">Original Claim Details</h2>
-            <div className="grid md:grid-cols-2 gap-6">
+          <div className="rounded-lg bg-gray-50 p-4">
+            <h2 className="mb-4 text-lg font-semibold">
+              Original Claim Details
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <Label className="text-gray-600">Activity</Label>
-                <p className="font-medium">{claim.activity}</p>
-              </div>
-              <div>
-                <Label className="text-gray-600">Station</Label>
-                <p className="font-medium">{claim.station}</p>
+                <p className="font-medium">{claim?.station}</p>
               </div>
               <div>
                 <Label className="text-gray-600">From Date</Label>
-                <p className="font-medium">{new Date(claim.from).toLocaleDateString()}</p>
+                <p className="font-medium">
+                  {new Date(claim?.from!).toLocaleDateString()}
+                </p>
               </div>
               <div>
                 <Label className="text-gray-600">To Date</Label>
-                <p className="font-medium">{new Date(claim.to).toLocaleDateString()}</p>
+                <p className="font-medium">
+                  {new Date(claim?.to!).toLocaleDateString()}
+                </p>
               </div>
               <div>
                 <Label className="text-gray-600">Venue</Label>
-                <p className="font-medium">{claim.venue}</p>
+                <p className="font-medium">{claim?.venue}</p>
               </div>
               <div>
                 <Label className="text-gray-600">Advance Amount</Label>
-                <p className="font-medium">${claim.advanceAmount.toFixed(2)}</p>
+                <p className="font-medium">
+                  ${Number(claim?.advanceAmount!).toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
@@ -321,28 +399,56 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {claim.travelExpenses.map((expense, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{expense.day}</TableCell>
-                      <TableCell>{expense.fromPlace}</TableCell>
-                      <TableCell>{expense.toPlace}</TableCell>
-                      <TableCell>{new Date(expense.dateDeparture).toLocaleString()}</TableCell>
-                      <TableCell>{new Date(expense.dateArrived).toLocaleString()}</TableCell>
-                      <TableCell>${expense.board.toFixed(2)}</TableCell>
-                      <TableCell>${expense.breakfast.toFixed(2)}</TableCell>
-                      <TableCell>${expense.lunch.toFixed(2)}</TableCell>
-                      <TableCell>${expense.dinner.toFixed(2)}</TableCell>
-                      <TableCell>${expense.fares.toFixed(2)}</TableCell>
-                      <TableCell>${expense.supper.toFixed(2)}</TableCell>
-                      <TableCell className="font-medium">${expense.total.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {claim &&
+                    claim.travellingAndSubsistence!.map((expense, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{expense.day}</TableCell>
+                        <TableCell>{expense.fromPlace}</TableCell>
+                        <TableCell>{expense.toPlace}</TableCell>
+                        <TableCell>
+                          {new Date(expense.dateDeparture).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(expense.dateArrived).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.board).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.breakfast).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.lunch).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.dinner).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.fares).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ${Number(expense.supper).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          ${Number(expense.total).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   <TableRow>
-                    <TableCell colSpan={11} className="text-right font-semibold">
+                    <TableCell
+                      colSpan={11}
+                      className="text-right font-semibold"
+                    >
                       Grand Total:
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                      $
+                      {claim
+                        ?.travellingAndSubsistence!.reduce(
+                          (acc, curr) => acc + Number(curr.total),
+                          0,
+                        )
+                        .toFixed(2)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -353,7 +459,9 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           {/* Additional Travel Expenses */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Additional Travel Expenses</h2>
+              <h2 className="text-xl font-semibold">
+                Additional Travel Expenses
+              </h2>
               <Button
                 type="button"
                 onClick={addTravelExpense}
@@ -391,14 +499,47 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                       <TableCell>
                         <Input
                           value={expense.fromPlace}
-                          onChange={(e) => updateTravelExpense(index, 'fromPlace', e.target.value)}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fromPlace",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fromPlace",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[100px]"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
                           value={expense.toPlace}
-                          onChange={(e) => updateTravelExpense(index, 'toPlace', e.target.value)}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[100px]"
                         />
                       </TableCell>
@@ -406,7 +547,27 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="datetime-local"
                           value={expense.dateDeparture}
-                          onChange={(e) => updateTravelExpense(index, 'dateDeparture', e.target.value)}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateDeparture",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateDeparture",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateDeparture",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[180px]"
                         />
                       </TableCell>
@@ -414,7 +575,27 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="datetime-local"
                           value={expense.dateArrived}
-                          onChange={(e) => updateTravelExpense(index, 'dateArrived', e.target.value)}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateArrived",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateArrived",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dateArrived",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[180px]"
                         />
                       </TableCell>
@@ -422,7 +603,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.board}
-                          onChange={(e) => updateTravelExpense(index, 'board', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "board",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "board", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "board", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -432,7 +625,27 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.breakfast}
-                          onChange={(e) => updateTravelExpense(index, 'breakfast', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              e.target.value,
+                            )
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -442,7 +655,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.lunch}
-                          onChange={(e) => updateTravelExpense(index, 'lunch', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "lunch",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "lunch", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "lunch", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -452,7 +677,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.dinner}
-                          onChange={(e) => updateTravelExpense(index, 'dinner', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dinner",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "dinner", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "dinner", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -462,7 +699,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.fares}
-                          onChange={(e) => updateTravelExpense(index, 'fares', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fares",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "fares", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "fares", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -472,7 +721,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={expense.supper}
-                          onChange={(e) => updateTravelExpense(index, 'supper', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "supper",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "supper", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "supper", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
@@ -494,11 +755,17 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell colSpan={11} className="text-right font-semibold">
+                    <TableCell
+                      colSpan={11}
+                      className="text-right font-semibold"
+                    >
                       Grand Total:
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${travelExpenses.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                      $
+                      {travelExpenses
+                        .reduce((acc, curr) => acc + curr.total, 0)
+                        .toFixed(2)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -509,7 +776,9 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
 
           {/* Existing Expert Allowances */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Existing Expert Allowances</h2>
+            <h2 className="text-lg font-semibold">
+              Existing Expert Allowances
+            </h2>
             <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
@@ -524,23 +793,38 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {claim.expertAllowances.map((allowance, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{allowance.day}</TableCell>
-                      <TableCell>{allowance.designation}</TableCell>
-                      <TableCell>{allowance.activity}</TableCell>
-                      <TableCell>${allowance.allowance.toFixed(2)}</TableCell>
-                      <TableCell>{allowance.units}</TableCell>
-                      <TableCell>${allowance.rate.toFixed(2)}</TableCell>
-                      <TableCell className="font-medium">${allowance.total.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {claim &&
+                    claim.expertAndAdministrationAllowances!.map(
+                      (allowance, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{allowance.day}</TableCell>
+                          <TableCell>{allowance.designation}</TableCell>
+                          <TableCell>{allowance.activity}</TableCell>
+                          <TableCell>
+                            ${Number(allowance.allowance).toFixed(2)}
+                          </TableCell>
+                          <TableCell>{Number(allowance.units)}</TableCell>
+                          <TableCell>
+                            ${Number(allowance.rate).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            ${Number(allowance.total).toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )}
                   <TableRow>
                     <TableCell colSpan={6} className="text-right font-semibold">
                       Grand Total:
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                      $
+                      {claim
+                        ?.expertAndAdministrationAllowances!.reduce(
+                          (acc, curr) => acc + Number(curr.total),
+                          0,
+                        )
+                        .toFixed(2)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -551,7 +835,9 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           {/* Additional Expert Allowances */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Additional Expert Allowances</h2>
+              <h2 className="text-xl font-semibold">
+                Additional Expert Allowances
+              </h2>
               <Button
                 type="button"
                 onClick={addExpertAllowance}
@@ -584,14 +870,54 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                       <TableCell>
                         <Input
                           value={allowance.designation}
-                          onChange={(e) => updateExpertAllowance(index, 'designation', e.target.value)}
+                          onChange={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "designation",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "designation",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "designation",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[150px]"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
                           value={allowance.activity}
-                          onChange={(e) => updateExpertAllowance(index, 'activity', e.target.value)}
+                          onChange={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "activity",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "activity",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "activity",
+                              e.target.value,
+                            )
+                          }
                           className="min-w-[150px]"
                         />
                       </TableCell>
@@ -599,7 +925,27 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={allowance.allowance}
-                          onChange={(e) => updateExpertAllowance(index, 'allowance', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "allowance",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "allowance",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "allowance",
+                              e.target.value,
+                            )
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[100px]"
@@ -609,7 +955,27 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={allowance.units}
-                          onChange={(e) => updateExpertAllowance(index, 'units', parseInt(e.target.value))}
+                          onChange={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "units",
+                              parseInt(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "units",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "units",
+                              e.target.value,
+                            )
+                          }
                           min="1"
                           className="min-w-[80px]"
                         />
@@ -618,7 +984,19 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         <Input
                           type="number"
                           value={allowance.rate}
-                          onChange={(e) => updateExpertAllowance(index, 'rate', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            updateExpertAllowance(
+                              index,
+                              "rate",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateExpertAllowance(index, "rate", e.target.value)
+                          }
+                          onBlur={(e) =>
+                            updateExpertAllowance(index, "rate", e.target.value)
+                          }
                           min="0"
                           step="0.01"
                           className="min-w-[100px]"
@@ -644,7 +1022,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                       Grand Total:
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${expertAllowances.reduce((acc, curr) => acc + curr.total, 0).toFixed(2)}
+                      $
+                      {expertAllowances
+                        .reduce((acc, curr) => acc + curr.total, 0)
+                        .toFixed(2)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -656,7 +1037,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           {/* Supporting Documents */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Supporting Documents</h2>
-            <div className="p-4 border rounded-lg bg-gray-50">
+            <div className="rounded-lg border bg-gray-50 p-4">
               <Label className="flex items-center gap-2">
                 <Receipt className="h-4 w-4" />
                 Upload Receipts
@@ -669,8 +1050,9 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 onChange={handleFileChange}
                 required
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Upload all relevant receipts and supporting documents (PDF or images)
+              <p className="mt-1 text-sm text-gray-500">
+                Upload all relevant receipts and supporting documents (PDF or
+                images)
               </p>
             </div>
           </div>
@@ -678,35 +1060,50 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           {/* Summary */}
           <div className="rounded-lg bg-gray-50 p-4">
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-gray-600">Total Existing Expenses:</span>
                 <span className="font-medium">
-                  ${(
-                    claim.travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
-                    claim.expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
-                  ).toFixed(2)}
+                  $
+                  {claim &&
+                    (
+                      claim.travellingAndSubsistence!.reduce(
+                        (acc, curr) => acc + Number(curr.total),
+                        0,
+                      ) +
+                      claim.expertAndAdministrationAllowances!.reduce(
+                        (acc, curr) => acc + Number(curr.total),
+                        0,
+                      )
+                    ).toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Additional Expenses:</span>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">
+                  Total Additional Expenses:
+                </span>
                 <span className="font-medium">
-                  ${(
+                  $
+                  {(
                     travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
                     expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
                   ).toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-gray-600">Advance Amount:</span>
-                <span className="font-medium">${claim.advanceAmount.toFixed(2)}</span>
+                <span className="font-medium">
+                  ${Number(claim?.advanceAmount).toFixed(2)}
+                </span>
               </div>
-              <div className="border-t pt-2 mt-2">
-                <div className="flex justify-between items-center text-lg">
+              <div className="mt-2 border-t pt-2">
+                <div className="flex items-center justify-between text-lg">
                   <span className="font-semibold">Final Balance:</span>
-                  <span className={`font-bold ${calculateTotals().refundAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {calculateTotals().refundAmount > 0 ? 
-                      `Refund: $${calculateTotals().refundAmount.toFixed(2)}` :
-                      `Extra Claim: $${calculateTotals().extraClaimAmount.toFixed(2)}`}
+                  <span
+                    className={`font-bold ${calculateTotals().refundAmount > 0 ? "text-red-600" : "text-green-600"}`}
+                  >
+                    {calculateTotals().refundAmount > 0
+                      ? `Refund: $${calculateTotals().refundAmount.toFixed(2)}`
+                      : `Extra Claim: $${calculateTotals().extraClaimAmount.toFixed(2)}`}
                   </span>
                 </div>
               </div>
@@ -716,7 +1113,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           <div className="pt-6">
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-blue-600 text-white hover:bg-blue-700"
               disabled={isLoading}
             >
               {isLoading ? "Submitting..." : "Submit Acquittal"}

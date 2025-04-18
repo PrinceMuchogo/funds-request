@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
 const navigation = {
   employee: [
@@ -65,6 +66,9 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
 
+  if (!session) {
+    redirect("/auth/signin");
+  }
 
   return (
     <div className="flex min-h-screen">

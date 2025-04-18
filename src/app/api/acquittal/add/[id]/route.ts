@@ -19,7 +19,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     const uploadedUrls: string[] = [];
 
     const claimData = {
-      acquittalStatus: "PENDING",
+      acquittalStatus: "PENDING CHECKER",
       acquittedAmount: data.acquittedAmount,
       refundAmount: data.refundAmount,
       extraClaimAmount: data.extraClaimAmount,
@@ -60,6 +60,46 @@ export async function PUT(req: Request, { params }: { params: Params }) {
             claimId: id,
           },
         });
+      }),
+    );
+
+    await Promise.all(
+      data.newTravelExpenses.map(async (travelExpense: any) => {
+        const newTravelExpense = await prisma.travellingAndSubsistence.create({
+          data: {
+            day: String(travelExpense.day),
+            fromPlace: travelExpense.fromPlace,
+            toPlace: travelExpense.toPlace,
+            dateDeparture: new Date(travelExpense.dateDeparture).toISOString(),
+            dateArrived: new Date(travelExpense.dateArrived).toISOString(),
+            board: travelExpense.board,
+            breakfast: travelExpense.breakfast,
+            lunch: travelExpense.lunch,
+            dinner: travelExpense.dinner,
+            fares: travelExpense.fares,
+            supper: travelExpense.supper,
+            total: travelExpense.total,
+            claimId: id,
+          },
+        });
+      }),
+    );
+
+    await Promise.all(
+      data.newExpertAllowances.map(async (expertAllowance: any) => {
+        const newExpertAllowances =
+          await prisma.expertAndAdministrationAllowance.create({
+            data: {
+              day: String(expertAllowance.day),
+              designation: expertAllowance.designation,
+              activity: expertAllowance.activity,
+              allowance: Number(expertAllowance.allowance),
+              units: expertAllowance.units,
+              rate: expertAllowance.rate,
+              total: expertAllowance.total,
+              claimId: id,
+            },
+          });
       }),
     );
 

@@ -1,24 +1,30 @@
+import { ExpertAndAdministrationAllowance } from "./expertAllowances";
+import { SupportingDocument } from "./supportingDocument";
+import { TravellingAndSubsistence } from "./travellingAndSubsistence";
+
 export type Claim = {
-    id?: string;
+  id?: string;
   userId?: string;
   user?: string;
   activity?: string;
   station?: string;
-  from?: string;
-  to?: string;
+  from?: Date;
+  to?: Date;
   venue?: string;
   checkedBy?: string;
-  approvedBy? : string;
+  checker?: string;
+  approvedBy?: string;
   status?: string;
-  acquittalStatus? : string;
-  amount? : string;
+  acquittalStatus?: string;
+  amount?: string;
   comment?: string;
-  advanceAmount?: string;
-  acquittedAmount?: string;
-  refundAmount? : string;
-  extraClaimAmount ?: string;
-  travellingAndSubsistence?: string;
-  expertAndAdministrationAllowances?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+  advanceAmount?: number;
+  acquittedAmount?: number;
+  refundAmount?: number;
+  extraClaimAmount?: number;
+  travellingAndSubsistence: TravellingAndSubsistence[];
+  expertAndAdministrationAllowances: ExpertAndAdministrationAllowance[];
+  SupportingDocuments: SupportingDocument[];
+  createdAt?: Date;
+  updatedAt?: Date;
+};

@@ -8,11 +8,6 @@ export async function PUT(req: Request, { params }: { params: Params }) {
   try {
     const data = await req.json();
 
-    const claimData = {
-      status: data.status,
-      comment: data.comment,
-      userId: data.userId,
-    };
     const id = params.id;
 
     const find_claim = await prisma.claimForm.findUnique({
@@ -27,6 +22,32 @@ export async function PUT(req: Request, { params }: { params: Params }) {
       });
     }
 
+    
+    if (!data.userId) {
+      return new Response(JSON.stringify({ message: "Please sign in to update acquittal!" }), {
+        status: 404,
+      });
+    }
+
+    
+    const find_checker = await prisma.user.findUnique({
+      where: {
+        id: data.userId,
+      },
+    });
+
+    if (!find_checker) {
+      return new Response(JSON.stringify({ message: "Checker Not Found!" }), {
+        status: 404,
+      });
+    }
+
+    
+    const claimData = {
+      acquittalStatus: data.status,
+      comment: data.comment,
+    };
+
     const updated_claim = await prisma.claimForm.update({
       where: { id },
       data: claimData,
@@ -40,7 +61,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
       );
     }
 
-    return new Response(JSON.stringify({ message: "Failed to update Acquittal" }), {
+    return new Response(JSON.stringify({ message: "Failed to update acquittal" }), {
       status: 400,
     });
   } catch (error) {

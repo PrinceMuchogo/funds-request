@@ -12,8 +12,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Filter } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Filter,
+  CheckCircle,
+  XCircle,
+  Eye,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,7 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -33,15 +49,24 @@ const statusColors = {
 const statusOptions = [
   { value: "all", label: "All Claims" },
   { value: "PENDING CHECKER", label: "Pending Checker" },
-  { value: "pending_approval", label: "Pending Approval" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "PENDING APPROVAL", label: "Pending Approval" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
 export default function Claims() {
   const [claims, setClaims] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const { data: session } = useSession();
+
+  const { toast } = useToast();
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [comment, setComment] = useState("");
+  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<"review" | "reject" | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const getClaims = async () => {
@@ -122,7 +147,9 @@ export default function Claims() {
                     {claim.activity}
                   </TableCell>
                   <TableCell>{claim.venue}</TableCell>
-                  <TableCell>${Number(claim.advanceAmount).toFixed(2)}</TableCell>
+                  <TableCell>
+                    ${Number(claim.advanceAmount).toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
@@ -137,13 +164,169 @@ export default function Claims() {
                     {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="hover:bg-gray-100"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hover:bg-blue-50"
+                          >
+                            <Eye className="h-4 w-4 text-blue-600" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto bg-white">
+                          <DialogHeader>
+                            <DialogTitle>Claim Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="mt-4 space-y-6 bg-white">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div>
+                                <h3 className="font-semibold">
+                                  Basic Information
+                                </h3>
+                                <div className="mt-2 space-y-2">
+                                  <p>
+                                    <span className="text-black">
+                                      Employee:
+                                    </span>{" "}
+                                    {claim.user.name}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">
+                                      Activity:
+                                    </span>{" "}
+                                    {claim.activity}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">Venue:</span>{" "}
+                                    {claim.venue}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">
+                                      Department:
+                                    </span>{" "}
+                                    {claim.department}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">Amount:</span>{" "}
+                                    ${Number(claim.advanceAmount).toFixed(2)}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">Date:</span>{" "}
+                                    {new Date(
+                                      claim.createdAt,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">Period</h3>
+                                <div className="mt-2 space-y-2">
+                                  <p>
+                                    <span className="text-black">From:</span>{" "}
+                                    {new Date(claim.from).toLocaleDateString()}
+                                  </p>
+                                  <p>
+                                    <span className="text-black">To:</span>{" "}
+                                    {new Date(claim.to).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h3 className="mb-2 font-semibold">
+                                Travel Expenses
+                              </h3>
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>From</TableHead>
+                                      <TableHead>To</TableHead>
+                                      <TableHead>Board</TableHead>
+                                      <TableHead>Meals</TableHead>
+                                      <TableHead>Fares</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {claim.travellingAndSubsistence.map(
+                                      (expense: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell>
+                                            {expense.fromPlace}
+                                          </TableCell>
+                                          <TableCell>
+                                            {expense.toPlace}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${expense.board}
+                                          </TableCell>
+                                          <TableCell>
+                                            $
+                                            {expense.breakfast +
+                                              expense.lunch +
+                                              expense.dinner +
+                                              expense.supper}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${expense.fares}
+                                          </TableCell>
+                                        </TableRow>
+                                      ),
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h3 className="mb-2 font-semibold">
+                                Expert Allowances
+                              </h3>
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Designation</TableHead>
+                                      <TableHead>Activity</TableHead>
+                                      <TableHead>Units</TableHead>
+                                      <TableHead>Rate</TableHead>
+                                      <TableHead>Total</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {claim.expertAndAdministrationAllowances.map(
+                                      (allowance: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell>
+                                            {allowance.designation}
+                                          </TableCell>
+                                          <TableCell>
+                                            {allowance.activity}
+                                          </TableCell>
+                                          <TableCell>
+                                            {allowance.units}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${allowance.rate}
+                                          </TableCell>
+                                          <TableCell>
+                                            ${allowance.allowance}
+                                          </TableCell>
+                                        </TableRow>
+                                      ),
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

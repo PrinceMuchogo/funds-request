@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, FileText, Filter, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +30,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useSession } from "next-auth/react";
+import { toast } from "react-toastify";
 
 const statusColors = {
   pending_checker: "bg-yellow-100 text-yellow-800",
@@ -40,25 +40,22 @@ const statusColors = {
 };
 
 const statusOptions = [
-  { value: "all", label: "All Claims" },
-  { value: "PENDING CHECKER", label: "Pending Review" },
-  { value: "PENDING APPROVAL", label: "In Progress" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
+  { value: "PENDING CHECKER", label: "Pending Checker" },
 ];
 
-export default function CheckerClaims() {
-  const { data: session } = useSession();
+export default function ApproverClaims() {
   const [claims, setClaims] = useState<any[]>([]);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = useState("PENDING CHECKER");
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [comment, setComment] = useState("");
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<"review" | "reject" | null>(
+  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewDialogComment, setViewDialogComment] = useState("");
+  const { data: session } = useSession();
 
   useEffect(() => {
     const getClaims = async () => {
@@ -84,31 +81,38 @@ export default function CheckerClaims() {
     (claim) => statusFilter === "all" || claim.status === statusFilter,
   );
 
-  const handleActionClick = (claim: any, action: "review" | "reject") => {
+  const handleActionClick = (claim: any, action: "approve" | "reject") => {
     setSelectedClaim(claim);
     setActionType(action);
     setComment("");
     setIsActionDialogOpen(true);
   };
 
-  const handleActionSubmit = async () => {
-    if (!selectedClaim || !actionType || !comment.trim()) return;
+  const handleActionSubmit = async (
+    fromDialog: "action" | "view" = "action",
+  ) => {
+    if (!selectedClaim || !actionType) return;
+    const commentText = fromDialog === "action" ? comment : viewDialogComment;
+    if (!commentText.trim()) return;
 
     setIsLoading(true);
     try {
       const response = await fetch(`/api/claim/update/${selectedClaim.id}`, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: actionType === "review" ? "PENDING_APPROVAL" : "REJECTED",
-          comment,
-          userId: session?.user.id
+          status:
+            actionType === "approve" ? "PENDING APPROVAL" : "REJECTED REVIEW",
+          comment: commentText,
+          userId: session?.user.id,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to update claim");
+      const data = await response.json();
+
+      if (!response.ok) return toast.error(`${data.message}`);
 
       // Update local state
       setClaims(
@@ -117,36 +121,41 @@ export default function CheckerClaims() {
             ? {
                 ...claim,
                 status:
-                  actionType === "review" ? "PENDING_APPROVAL" : "REJECTED",
+                  actionType === "approve"
+                    ? "PENDING APPROVAL"
+                    : "REJECTED REVIEW",
               }
             : claim,
         ),
       );
 
-      toast({
-        title: actionType === "review" ? "Claim reviewed" : "Claim rejected",
-        description: `The claim has been ${actionType === "review" ? "reviewed and sent for approval" : "rejected"}.`,
-      });
+      toast.success(
+        `The claim has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`,
+      );
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update claim status. Please try again.",
-        variant: "destructive",
-      });
+      console.log("error: ", error);
+      toast.error("Failed to update claim status. Please try again.");
     } finally {
       setIsLoading(false);
       setIsActionDialogOpen(false);
+      setIsViewDialogOpen(false);
       setSelectedClaim(null);
       setActionType(null);
       setComment("");
+      setViewDialogComment("");
     }
   };
 
+  const handleViewDialogAction = (action: "approve" | "reject") => {
+    setActionType(action);
+    handleActionSubmit("view");
+  };
+
   return (
-    <div className="space-y-6 text-black">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Claims Pending Review</h1>
-        <p className="mt-1 text-gray-600">Review and process expense claims</p>
+        <h1 className="text-2xl font-bold">Claims Review</h1>
+        <p className="mt-1 text-gray-600">Review and approve expense claims</p>
       </div>
 
       <div className="overflow-hidden rounded-xl bg-white shadow-lg">
@@ -176,9 +185,9 @@ export default function CheckerClaims() {
                 <TableHead>Activity</TableHead>
                 <TableHead className="hidden md:table-cell">Venue</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Department
-                </TableHead>
+                {/* <TableHead className="hidden md:table-cell">
+                  Checked By
+                </TableHead> */}
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -196,20 +205,24 @@ export default function CheckerClaims() {
                   <TableCell>
                     ${Number(claim.advanceAmount).toFixed(2)}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {claim.department}
-                  </TableCell>
+                  {/* <TableCell className="hidden md:table-cell">
+                    {claim.checkedBy}
+                  </TableCell> */}
                   <TableCell className="hidden md:table-cell">
                     {new Date(claim.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Dialog>
+                      <Dialog
+                        open={isViewDialogOpen}
+                        onOpenChange={setIsViewDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="hover:bg-blue-50"
+                            onClick={() => setSelectedClaim(claim)}
                           >
                             <Eye className="h-4 w-4 text-blue-600" />
                           </Button>
@@ -218,7 +231,7 @@ export default function CheckerClaims() {
                           <DialogHeader>
                             <DialogTitle>Claim Details</DialogTitle>
                           </DialogHeader>
-                          <div className="mt-4 space-y-6 bg-white">
+                          <div className="mt-4 space-y-6">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
                                 <h3 className="font-semibold">
@@ -226,33 +239,43 @@ export default function CheckerClaims() {
                                 </h3>
                                 <div className="mt-2 space-y-2">
                                   <p>
-                                    <span className="text-black">
+                                    <span className="text-gray-600">
                                       Employee:
                                     </span>{" "}
                                     {claim.employee}
                                   </p>
                                   <p>
-                                    <span className="text-black">
+                                    <span className="text-gray-600">
                                       Activity:
                                     </span>{" "}
                                     {claim.activity}
                                   </p>
                                   <p>
-                                    <span className="text-black">Venue:</span>{" "}
+                                    <span className="text-gray-600">
+                                      Venue:
+                                    </span>{" "}
                                     {claim.venue}
                                   </p>
                                   <p>
-                                    <span className="text-black">
+                                    <span className="text-gray-600">
                                       Department:
                                     </span>{" "}
                                     {claim.department}
                                   </p>
                                   <p>
-                                    <span className="text-black">Amount:</span>{" "}
+                                    <span className="text-gray-600">
+                                      Amount:
+                                    </span>{" "}
                                     ${Number(claim.advanceAmount).toFixed(2)}
                                   </p>
+                                  {/* <p>
+                                    <span className="text-gray-600">
+                                      Checked By:
+                                    </span>{" "}
+                                    {claim.checkedBy}
+                                  </p> */}
                                   <p>
-                                    <span className="text-black">Date:</span>{" "}
+                                    <span className="text-gray-600">Date:</span>{" "}
                                     {new Date(
                                       claim.createdAt,
                                     ).toLocaleDateString()}
@@ -263,11 +286,11 @@ export default function CheckerClaims() {
                                 <h3 className="font-semibold">Period</h3>
                                 <div className="mt-2 space-y-2">
                                   <p>
-                                    <span className="text-black">From:</span>{" "}
+                                    <span className="text-gray-600">From:</span>{" "}
                                     {new Date(claim.from).toLocaleDateString()}
                                   </p>
                                   <p>
-                                    <span className="text-black">To:</span>{" "}
+                                    <span className="text-gray-600">To:</span>{" "}
                                     {new Date(claim.to).toLocaleDateString()}
                                   </p>
                                 </div>
@@ -361,6 +384,51 @@ export default function CheckerClaims() {
                                 </Table>
                               </div>
                             </div>
+
+                            <div className="space-y-4 border-t pt-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="viewComment">Comment</Label>
+                                <Textarea
+                                  id="viewComment"
+                                  value={viewDialogComment}
+                                  onChange={(e) =>
+                                    setViewDialogComment(e.target.value)
+                                  }
+                                  placeholder="Add your comments..."
+                                  className="min-h-[100px]"
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setIsViewDialogOpen(false)}
+                                  disabled={isLoading}
+                                >
+                                  Close
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() =>
+                                    handleViewDialogAction("reject")
+                                  }
+                                  disabled={
+                                    isLoading || !viewDialogComment.trim()
+                                  }
+                                >
+                                  {isLoading ? "Processing..." : "Reject"}
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    handleViewDialogAction("approve")
+                                  }
+                                  disabled={
+                                    isLoading || !viewDialogComment.trim()
+                                  }
+                                >
+                                  {isLoading ? "Processing..." : "Approve"}
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -368,7 +436,7 @@ export default function CheckerClaims() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleActionClick(claim, "review")}
+                        onClick={() => handleActionClick(claim, "approve")}
                         className="text-green-600 hover:bg-green-50"
                       >
                         <CheckCircle className="h-4 w-4" />
@@ -395,7 +463,7 @@ export default function CheckerClaims() {
         <DialogContent className="bg-white sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {actionType === "review" ? "Review Claim" : "Reject Claim"}
+              {actionType === "approve" ? "Approve Claim" : "Reject Claim"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -406,8 +474,8 @@ export default function CheckerClaims() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={
-                  actionType === "review"
-                    ? "Add review comments..."
+                  actionType === "approve"
+                    ? "Add approval comments..."
                     : "Reason for rejection..."
                 }
                 className="min-h-[100px]"
@@ -423,15 +491,15 @@ export default function CheckerClaims() {
               Cancel
             </Button>
             <Button
-              variant={actionType === "review" ? "default" : "destructive"}
-              onClick={handleActionSubmit}
+              variant={actionType === "approve" ? "default" : "destructive"}
+              onClick={() => handleActionSubmit("action")}
               disabled={isLoading || !comment.trim()}
             >
               {isLoading
                 ? "Processing..."
-                : actionType === "review"
-                  ? "Submit Review"
-                  : "Reject Claim"}
+                : actionType === "approve"
+                  ? "Approve"
+                  : "Reject"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -14,6 +14,7 @@ export type User = {
   department?: string;
   role? : string;
   claims? : string;
+  checkedClaim?: string
   createdAt?: Date;
   updatedAt?: Date
 }

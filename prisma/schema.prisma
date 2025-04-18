@@ -26,9 +26,10 @@ model User {
   status        String?
   branch        String?
   accountNumber String?
-  department String?
+  department    String?
   role          String?
-  claims        ClaimForm[]
+  claims        ClaimForm[] @relation("UserRelation")
+  checkedClaim  ClaimForm[] @relation("CheckerRelation")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -36,13 +37,14 @@ model User {
 model ClaimForm {
   id                                String                             @id @default(uuid())
   userId                            String?
-  user                              User?                              @relation(fields: [userId], references: [id])
+  user                              User?                              @relation("UserRelation", fields: [userId], references: [id])
   activity                          String
   station                           String
   from                              DateTime
   to                                DateTime
   venue                             String
   checkedBy                         String?
+  checker                           User?                              @relation("CheckerRelation", fields: [checkedBy], references: [id])
   approvedBy                        String?
   status                            String?
   acquittalStatus                   String?
@@ -54,7 +56,7 @@ model ClaimForm {
   extraClaimAmount                  Float?                             @default(0) // NEW: Stores the amount to be reimbursed (if expenses > advance)
   travellingAndSubsistence          TravellingAndSubsistence[]
   expertAndAdministrationAllowances ExpertAndAdministrationAllowance[]
-  SupportingDocuments SupportingDocument[]
+  SupportingDocuments               SupportingDocument[]
   createdAt                         DateTime                           @default(now())
   updatedAt                         DateTime                           @updatedAt
 }
@@ -67,7 +69,7 @@ model TravellingAndSubsistence {
   toPlace       String?
   dateDeparture DateTime?
   dateArrived   DateTime?
-  day String?
+  day           String?
   board         Float?
   breakfast     Float?
   lunch         Float?
@@ -85,7 +87,7 @@ model ExpertAndAdministrationAllowance {
   claim       ClaimForm? @relation(fields: [claimId], references: [id])
   designation String?
   activity    String?
-  day String?
+  day         String?
   allowance   Float?
   units       Int?
   rate        Float?
@@ -95,11 +97,10 @@ model ExpertAndAdministrationAllowance {
 }
 
 model SupportingDocument {
-  id          String     @id @default(uuid())
-  url String?
-  claimId     String?
-  claim       ClaimForm? @relation(fields: [claimId], references: [id])
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
+  id        String     @id @default(uuid())
+  url       String?
+  claimId   String?
+  claim     ClaimForm? @relation(fields: [claimId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }

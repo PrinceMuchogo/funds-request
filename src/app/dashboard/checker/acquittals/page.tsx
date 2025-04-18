@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Filter, Eye, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -30,114 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
 
-const mockAcquittals = [
-  {
-    id: "1",
-    employee: "John Doe",
-    activity: "Business Trip to New York",
-    advanceAmount: 1500.00,
-    acquittedAmount: 1250.00,
-    refundAmount: 250.00,
-    extraClaimAmount: 0,
-    department: "Engineering",
-    checkedBy: "Jane Smith",
-    updatedAt: "2024-03-20",
-    venue: "NYC Conference Center",
-    status: "PENDING_APPROVAL",
-    from: "2024-03-15",
-    to: "2024-03-20",
-    documents: [
-      {
-        name: "Flight Tickets.pdf",
-        url: "https://example.com/documents/flight-tickets.pdf",
-        type: "application/pdf"
-      },
-      {
-        name: "Hotel Receipt.pdf",
-        url: "https://example.com/documents/hotel-receipt.pdf",
-        type: "application/pdf"
-      },
-      {
-        name: "Taxi Receipts.pdf",
-        url: "https://example.com/documents/taxi-receipts.pdf",
-        type: "application/pdf"
-      }
-    ],
-    travellingAndSubsistence: [
-      {
-        fromPlace: "Office",
-        toPlace: "NYC",
-        board: 200,
-        breakfast: 15,
-        lunch: 25,
-        dinner: 40,
-        fares: 150,
-        supper: 20,
-        total: 450
-      }
-    ],
-    expertAndAdministrationAllowances: [
-      {
-        designation: "Senior Engineer",
-        activity: "Technical Presentation",
-        units: 3,
-        rate: 50,
-        total: 150
-      }
-    ]
-  },
-  {
-    id: "2",
-    employee: "Jane Smith",
-    activity: "Client Meeting in London",
-    advanceAmount: 2000.00,
-    acquittedAmount: 2100.00,
-    refundAmount: 0,
-    extraClaimAmount: 100.00,
-    department: "Sales",
-    checkedBy: "Mike Johnson",
-    updatedAt: "2024-03-18",
-    venue: "London Office",
-    status: "PENDING_APPROVAL",
-    from: "2024-03-10",
-    to: "2024-03-15",
-    documents: [
-      {
-        name: "Train Tickets.pdf",
-        url: "https://example.com/documents/train-tickets.pdf",
-        type: "application/pdf"
-      },
-      {
-        name: "Meeting Agenda.pdf",
-        url: "https://example.com/documents/meeting-agenda.pdf",
-        type: "application/pdf"
-      }
-    ],
-    travellingAndSubsistence: [
-      {
-        fromPlace: "Office",
-        toPlace: "London",
-        board: 300,
-        breakfast: 20,
-        lunch: 30,
-        dinner: 45,
-        fares: 200,
-        supper: 25,
-        total: 620
-      }
-    ],
-    expertAndAdministrationAllowances: [
-      {
-        designation: "Sales Manager",
-        activity: "Client Presentation",
-        units: 2,
-        rate: 75,
-        total: 150
-      }
-    ]
-  }
-];
 
 const statusOptions = [
   { value: "all", label: "All Acquittals" },
@@ -150,7 +44,6 @@ const statusOptions = [
 export default function CheckerAcquittals() {
   const [acquittals, setAcquittals] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
-  const { toast } = useToast();
   const [selectedAcquittal, setSelectedAcquittal] = useState<any>(null);
   const [comment, setComment] = useState("");
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
@@ -158,6 +51,7 @@ export default function CheckerAcquittals() {
   const [isLoading, setIsLoading] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [viewDialogComment, setViewDialogComment] = useState("");
+  const {data:session} = useSession();
   
   useEffect(() => {
     const getAcquittals = async () => {
@@ -180,7 +74,7 @@ export default function CheckerAcquittals() {
   }, []);
 
   const filteredAcquittals = acquittals.filter(
-    acquittal => statusFilter === "all" || acquittal.status === statusFilter
+    acquittal => statusFilter === "all" || acquittal.acquittalStatus === statusFilter
   );
 
   const handleActionClick = (acquittal: any, action: "approve" | "reject") => {
@@ -197,14 +91,15 @@ export default function CheckerAcquittals() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/acquittal/${selectedAcquittal.id}/check`, {
-        method: "POST",
+      const response = await fetch(`/api/acquittal/update/${selectedAcquittal.id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: actionType === "approve" ? "PENDING_APPROVAL" : "REJECTED",
+          status: actionType === "approve" ? "PENDING APPROVAL" : "REJECTEDR",
           comment: commentText,
+          userId: session?.user.id
         }),
       });
 
@@ -215,22 +110,15 @@ export default function CheckerAcquittals() {
           acquittal.id === selectedAcquittal.id
             ? {
                 ...acquittal,
-                status: actionType === "approve" ? "PENDING_APPROVAL" : "REJECTED",
+                status: actionType === "approve" ? "PENDING APPROVAL" : "REJECTED",
               }
             : acquittal,
         ),
       );
 
-      toast({
-        title: actionType === "approve" ? "Acquittal approved" : "Acquittal rejected",
-        description: `The acquittal has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`,
-      });
+      toast.success(`The acquittal has been ${actionType === "approve" ? "approved" : "rejected"} successfully.`);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update acquittal status. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update acquittal status. Please try again.");
     } finally {
       setIsLoading(false);
       setIsActionDialogOpen(false);
@@ -282,7 +170,7 @@ export default function CheckerAcquittals() {
                 <TableHead>Advance</TableHead>
                 <TableHead>Acquitted</TableHead>
                 <TableHead>Refund/Extra</TableHead>
-                <TableHead>Department</TableHead>
+                <TableHead>Acquittal status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -290,7 +178,7 @@ export default function CheckerAcquittals() {
             <TableBody>
               {filteredAcquittals.map((acquittal) => (
                 <TableRow key={acquittal.id}>
-                  <TableCell className="font-medium">{acquittal.employee}</TableCell>
+                  <TableCell className="font-medium">{acquittal.user.name}</TableCell>
                   <TableCell>{acquittal.activity}</TableCell>
                   <TableCell>${Number(acquittal.advanceAmount).toFixed(2)}</TableCell>
                   <TableCell>${Number(acquittal.acquittedAmount).toFixed(2)}</TableCell>
@@ -303,7 +191,7 @@ export default function CheckerAcquittals() {
                       "$0.00"
                     )}
                   </TableCell>
-                  <TableCell>{acquittal.department}</TableCell>
+                  <TableCell className="font-medium">{acquittal.acquittalStatus}</TableCell>
                   <TableCell>{new Date(acquittal.updatedAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -334,6 +222,13 @@ export default function CheckerAcquittals() {
                                   <p><span className="text-gray-600">Department:</span> {acquittal.department}</p>
                                   <p><span className="text-gray-600">Advance Amount:</span> ${acquittal.advanceAmount.toFixed(2)}</p>
                                   <p><span className="text-gray-600">Acquitted Amount:</span> ${acquittal.acquittedAmount.toFixed(2)}</p>
+                                  <p><span className="text-gray-600">Refund/Extra Amount:</span> {acquittal.refundAmount ? (
+                      <span className="text-red-600">-${Number(acquittal.refundAmount).toFixed(2)}</span>
+                    ) : acquittal.extraClaimAmount ? (
+                      <span className="text-green-600">+${Number(acquittal.extraClaimAmount).toFixed(2)}</span>
+                    ) : (
+                      "$0.00"
+                    )}</p>
                                 </div>
                               </div>
                               <div>

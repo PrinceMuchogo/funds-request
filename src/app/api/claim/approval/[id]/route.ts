@@ -37,7 +37,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     });
 
     if (!find_checker) {
-      return new Response(JSON.stringify({ message: "Checker Not Found!" }), {
+      return new Response(JSON.stringify({ message: "Approver Not Found!" }), {
         status: 404,
       });
     }
@@ -46,7 +46,8 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     const claimData = {
       status: data.status,
       comment: data.comment,
-      checkedBy: data.userId,
+      approvedBy: data.userId,
+      acquittalStatus: data.status === "APPROVED" ? "PENDING" : "NOT SET"
     };
 
     const updated_claim = await prisma.claimForm.update({
