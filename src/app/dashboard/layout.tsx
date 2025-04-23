@@ -71,7 +71,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen text-black">
       {/* Mobile sidebar backdrop */}
       {isSidebarOpen && (
         <div
@@ -95,7 +95,7 @@ export default function DashboardLayout({
               className={cn(
                 "mb-1 flex items-center space-x-2 rounded-lg px-4 py-2 text-sm transition-colors",
                 pathname === item.href
-                  ? "bg-blue-50 text-blue-600"
+                  ? "bg-blue-50 text-black"
                   : "text-gray-700 hover:bg-gray-50",
               )}
               onClick={() => setIsSidebarOpen(false)}
@@ -113,7 +113,7 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between border-b bg-white p-4 lg:hidden">
           <Link href="/" className="flex items-center space-x-2">
             <CircleDollarSign className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-bold text-blue-600">FundFlow</span>
+            <span className="text-xl font-bold text-blue-600">IPMS</span>
           </Link>
           <Button
             variant="ghost"

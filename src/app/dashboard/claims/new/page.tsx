@@ -234,7 +234,7 @@ export default function NewClaim() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 text-black">
       <div className="overflow-hidden rounded-xl bg-white shadow-lg">
         <div className="bg-blue-600 p-6">
           <h1 className="text-2xl font-bold text-white">New Claim Request</h1>

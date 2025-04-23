@@ -114,7 +114,7 @@ export default function AdminLandingPage() {
   };
 
   return (
-    <div>
+    <div className="text-black">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">User Management</h1>
         <Link href={"/dashboard/admin/add-user"}>

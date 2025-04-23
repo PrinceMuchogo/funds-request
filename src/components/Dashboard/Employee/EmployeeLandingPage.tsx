@@ -93,7 +93,7 @@ export default function Claims() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-black">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold">My Claims</h1>

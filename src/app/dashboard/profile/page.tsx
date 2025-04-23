@@ -66,7 +66,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl text-black">
       <h1 className="mb-6 text-2xl font-bold">Profile Settings</h1>
       <div className="rounded-lg bg-white p-6 shadow">
         <form onSubmit={handleSubmit} className="space-y-6">

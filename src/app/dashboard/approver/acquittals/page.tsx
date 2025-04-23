@@ -136,7 +136,7 @@ export default function CheckerAcquittals() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-black">
       <div>
         <h1 className="text-2xl font-bold">Acquittals Approval</h1>
         <p className="text-gray-600 mt-1">Review and process expense acquittals</p>

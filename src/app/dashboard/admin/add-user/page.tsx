@@ -67,7 +67,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center  px-6 py-2">
+    <div className="flex min-h-screen items-center justify-center  px-6 py-2 text-black">
       <div className="w-full max-w-lg space-y-6 rounded-lg  p-2 ">
         <div className="text-center">
           <CircleDollarSign className="mx-auto h-12 w-12 text-blue-600" />

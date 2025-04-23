@@ -147,7 +147,7 @@ export default function ApproverClaims() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-black">
       <div>
         <h1 className="text-2xl font-bold">Claims Pending Approval</h1>
         <p className="mt-1 text-gray-600">Review and approve expense claims</p>
