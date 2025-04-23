@@ -94,7 +94,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
               designation: expertAllowance.designation,
               activity: expertAllowance.activity,
               allowance: Number(expertAllowance.allowance),
-              units: expertAllowance.units,
+              units: Number(expertAllowance.units),
               rate: expertAllowance.rate,
               total: expertAllowance.total,
               claimId: id,

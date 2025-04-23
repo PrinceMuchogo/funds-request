@@ -24,6 +24,7 @@ import { Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 type User = {
   id: string;
@@ -97,12 +98,25 @@ export default function AdminUsers() {
     setIsAddUserOpen(false);
   };
 
-  const handleRoleChange = (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: string) => {
+
+    try {
+      
+      const response = await fetch(`/api/users/update/${userId}/role`, {
+        method: "PUT",
+        body: JSON.stringify({
+          role: newRole,
+        }),
+      });
+
+      if(response.ok){
+        return toast
+      }
+    } catch (error) {
+      
+    }
     // TODO: Implement role change
-    toast({
-      title: "Role updated",
-      description: "The user's role has been updated successfully.",
-    });
+  
   };
 
   const handleDeleteUser = (userId: string) => {

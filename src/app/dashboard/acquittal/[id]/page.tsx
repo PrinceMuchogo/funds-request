@@ -100,7 +100,8 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   const [files, setFiles] = useState<FileList | null>(null);
   const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([
     {
-      day: claim?.travellingAndSubsistence.length! + 1,
+      day: 2,
+      // claim?.travellingAndSubsistence.length! + 1,
       fromPlace: "",
       toPlace: "",
       dateDeparture: "",
@@ -138,7 +139,8 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   }, [session]);
   const [expertAllowances, setExpertAllowances] = useState<ExpertAllowance[]>([
     {
-      day: claim?.expertAndAdministrationAllowances.length! + 1,
+      day: 2,
+      // claim?.expertAndAdministrationAllowances.length! + 1,
       designation: "",
       activity: "",
       allowance: 0,
