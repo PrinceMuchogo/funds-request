@@ -150,6 +150,7 @@ export default function AdminUsers() {
                     {user.role.toUpperCase()}
                   </Badge>
                 </TableCell>
+                {/*
                 <TableCell>
                   <Badge
                     variant="secondary"
@@ -160,6 +161,15 @@ export default function AdminUsers() {
                     }
                   >
                     {user.status.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                 */}
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={"bg-green-100 text-green-800"}
+                  >
+                    {"ACTIVE"}
                   </Badge>
                 </TableCell>
                 <TableCell>
