@@ -21,6 +21,7 @@ export default function SignUp() {
     branch: "",
     accountNumber: "",
     department: "",
+    role: "",
     password: "",
     confirmPassword: "",
   });
