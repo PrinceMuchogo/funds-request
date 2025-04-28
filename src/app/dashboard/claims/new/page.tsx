@@ -46,7 +46,7 @@ export default function NewClaim() {
   const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [id, setUserId] = useState()
+  const [id, setUserId] = useState();
   const [formData, setFormData] = useState({
     activity: "",
     station: "",
@@ -54,13 +54,12 @@ export default function NewClaim() {
     to: "",
     venue: "",
     advanceAmount: 0,
-    userId: session?.user.id
+    userId: session?.user.id,
   });
 
   useEffect(() => {
-    setFormData({ ...formData, userId: session?.user.id })
-  }, [session])
-  
+    setFormData({ ...formData, userId: session?.user.id });
+  }, [session]);
 
   const [travelExpenses, setTravelExpenses] = useState<TravellingExpense[]>([
     {
@@ -205,8 +204,7 @@ export default function NewClaim() {
     const claimData = {
       ...formData,
       travelExpenses,
-      expertAllowances,
-      totalAmount: totalTravelExpenses + totalExpertAllowances,
+      totalAmount: totalTravelExpenses,
     };
 
     console.log("Submitting claim:", claimData);
@@ -374,7 +372,7 @@ export default function NewClaim() {
                     <TableRow key={index}>
                       <TableCell>{expense.day}</TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           value={expense.fromPlace}
                           onChange={(e) =>
                             updateTravelExpense(
@@ -391,10 +389,33 @@ export default function NewClaim() {
                             )
                           }
                           className="min-w-[100px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.fromPlace}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fromPlace",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fromPlace",
+                              e.target.value,
+                            )
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="Harare">Harare</option>
+                          <option value="Bulawayo">Bulawayo</option>
+                          <option value="Mutare">Mutare</option>
+                          <option value="Gweru">Gweru</option>
+                        </select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           value={expense.toPlace}
                           onChange={(e) =>
                             updateTravelExpense(
@@ -418,7 +439,37 @@ export default function NewClaim() {
                             )
                           }
                           className="min-w-[100px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.toPlace}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "toPlace",
+                              e.target.value,
+                            )
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="Harare">Harare</option>
+                          <option value="Bulawayo">Bulawayo</option>
+                          <option value="Mutare">Mutare</option>
+                          <option value="Gweru">Gweru</option>
+                        </select>
                       </TableCell>
                       <TableCell>
                         <Input
@@ -477,7 +528,7 @@ export default function NewClaim() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           type="number"
                           value={expense.board}
                           onChange={(e) =>
@@ -496,10 +547,30 @@ export default function NewClaim() {
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.board}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "board",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "board", parseFloat(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "board", parseFloat(e.target.value))
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="75">$75</option>
+                        </select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           type="number"
                           value={expense.breakfast}
                           onChange={(e) =>
@@ -526,10 +597,38 @@ export default function NewClaim() {
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.breakfast}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "breakfast",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="20">$20</option>
+                        </select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           type="number"
                           value={expense.lunch}
                           onChange={(e) =>
@@ -548,10 +647,30 @@ export default function NewClaim() {
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.lunch}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "lunch",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "lunch", parseFloat(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "lunch", parseFloat(e.target.value))
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="25">$25</option>
+                        </select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           type="number"
                           value={expense.dinner}
                           onChange={(e) =>
@@ -570,10 +689,30 @@ export default function NewClaim() {
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.dinner}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "dinner",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "dinner", parseFloat(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "dinner", parseFloat(e.target.value))
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="25">$25</option>
+                        </select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        {/* <Input
                           type="number"
                           value={expense.fares}
                           onChange={(e) =>
@@ -592,7 +731,27 @@ export default function NewClaim() {
                           min="0"
                           step="0.01"
                           className="min-w-[80px]"
-                        />
+                        /> */}
+                        <select
+                          value={expense.fares}
+                          onChange={(e) =>
+                            updateTravelExpense(
+                              index,
+                              "fares",
+                              parseFloat(e.target.value),
+                            )
+                          }
+                          onFocus={(e) =>
+                            updateTravelExpense(index, "fares", parseFloat(e.target.value))
+                          }
+                          onBlur={(e) =>
+                            updateTravelExpense(index, "fares", parseFloat(e.target.value))
+                          }
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="20">$20</option>
+                        </select>
                       </TableCell>
                       <TableCell>
                         <Input
@@ -606,10 +765,10 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "supper", e.target.value)
+                            updateTravelExpense(index, "supper", parseFloat(e.target.value))
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "supper", e.target.value)
+                            updateTravelExpense(index, "supper", parseFloat(e.target.value))
                           }
                           min="0"
                           step="0.01"
@@ -642,9 +801,12 @@ export default function NewClaim() {
                     </TableCell>
                     <TableCell className="font-semibold">
                       $
-                      {travelExpenses
-                        .reduce((acc, curr) => acc + curr.total, 0)
-                        .toFixed(2)}
+                      {Number(
+                        travelExpenses.reduce(
+                          (acc, curr) => Number(acc) + curr.total,
+                          0,
+                        ),
+                      ).toFixed(2)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -654,7 +816,7 @@ export default function NewClaim() {
           </div>
 
           {/* Expert and Administration Allowances */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">
                 Expert & Administration Allowances
@@ -855,7 +1017,7 @@ export default function NewClaim() {
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </div> */}
 
           <div className="rounded-lg bg-gray-50 p-4">
             <div className="text-right">
@@ -863,10 +1025,9 @@ export default function NewClaim() {
                 <span className="font-semibold">Total Claim Amount: </span>
                 <span className="text-xl font-bold text-blue-600">
                   $
-                  {(
-                    travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
-                    expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
-                  ).toFixed(2)}
+                  {travelExpenses
+                    .reduce((acc, curr) => acc + curr.total, 0)
+                    .toFixed(2)}
                 </span>
               </p>
             </div>

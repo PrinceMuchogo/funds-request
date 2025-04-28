@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       acquittalStatus: "NOT SET"
     };
 
-    const expertAllowances = data.expertAllowances;
+    // const expertAllowances = data.expertAllowances;
     const travelExpenses = data.travelExpenses;
 
     const newClaim = await prisma.claimForm.create({
@@ -45,22 +45,22 @@ export async function POST(req: Request) {
       }),
     );
     
-    await Promise.all(
-      expertAllowances.map(async (expertAllowance: any) => {
-        const expertAllowanceEntry = await prisma.expertAndAdministrationAllowance.create({
-          data: {
-            claimId: newClaim.id,
-            designation: expertAllowance.designation,
-            activity: expertAllowance.activity,
-            day: String(expertAllowance.day),
-            allowance: Number(expertAllowance.allowance),
-            units: Number(expertAllowance.units),
-            rate: Number(expertAllowance.rate),
-            total: Number(expertAllowance.units) * Number(expertAllowance.rate)
-          },
-        });
-      }),
-    );
+    // await Promise.all(
+    //   expertAllowances.map(async (expertAllowance: any) => {
+    //     const expertAllowanceEntry = await prisma.expertAndAdministrationAllowance.create({
+    //       data: {
+    //         claimId: newClaim.id,
+    //         designation: expertAllowance.designation,
+    //         activity: expertAllowance.activity,
+    //         day: String(expertAllowance.day),
+    //         allowance: Number(expertAllowance.allowance),
+    //         units: Number(expertAllowance.units),
+    //         rate: Number(expertAllowance.rate),
+    //         total: Number(expertAllowance.units) * Number(expertAllowance.rate)
+    //       },
+    //     });
+    //   }),
+    // );
     // Return the processed data
     return new Response(
       JSON.stringify({ message: "Claim submitted successfully" }),
