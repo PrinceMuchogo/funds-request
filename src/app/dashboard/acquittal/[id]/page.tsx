@@ -139,7 +139,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   }, [session]);
   const [expertAllowances, setExpertAllowances] = useState<ExpertAllowance[]>([
     {
-      day: 2,
+      day: 1,
       // claim?.expertAndAdministrationAllowances.length! + 1,
       designation: "",
       activity: "",
@@ -334,7 +334,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8lack">
+    <div className="py-8lack mx-auto max-w-7xl px-4">
       <div className="overflow-hidden rounded-xl bg-white shadow-lg">
         <div className="bg-blue-600 p-6">
           <h1 className="text-2xl font-bold text-white">Acquittal Form</h1>
@@ -613,10 +613,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "board", e.target.value)
+                            updateTravelExpense(index, "board", parseFloat(e.target.value),)
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "board", e.target.value)
+                            updateTravelExpense(index, "board", parseFloat(e.target.value),)
                           }
                           min="0"
                           step="0.01"
@@ -638,14 +638,14 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             updateTravelExpense(
                               index,
                               "breakfast",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           onBlur={(e) =>
                             updateTravelExpense(
                               index,
                               "breakfast",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           min="0"
@@ -665,10 +665,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "lunch", e.target.value)
+                            updateTravelExpense(index, "lunch", parseFloat(e.target.value),)
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "lunch", e.target.value)
+                            updateTravelExpense(index, "lunch", parseFloat(e.target.value),)
                           }
                           min="0"
                           step="0.01"
@@ -687,10 +687,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "dinner", e.target.value)
+                            updateTravelExpense(index, "dinner", parseFloat(e.target.value),)
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "dinner", e.target.value)
+                            updateTravelExpense(index, "dinner", parseFloat(e.target.value),)
                           }
                           min="0"
                           step="0.01"
@@ -709,10 +709,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "fares", e.target.value)
+                            updateTravelExpense(index, "fares", parseFloat(e.target.value),)
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "fares", e.target.value)
+                            updateTravelExpense(index, "fares", parseFloat(e.target.value),)
                           }
                           min="0"
                           step="0.01"
@@ -731,10 +731,14 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "supper", e.target.value)
+                            updateTravelExpense(
+                              index,
+                              "supper",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "supper", e.target.value)
+                            updateTravelExpense(index, "supper", parseFloat(e.target.value),)
                           }
                           min="0"
                           step="0.01"
@@ -742,7 +746,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        ${expense.total.toFixed(2)}
+                        ${Number(expense.total).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -765,9 +769,12 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                     </TableCell>
                     <TableCell className="font-semibold">
                       $
-                      {travelExpenses
-                        .reduce((acc, curr) => acc + curr.total, 0)
-                        .toFixed(2)}
+                      {Number(
+                        travelExpenses.reduce(
+                          (acc, curr) => acc + curr.total,
+                          0,
+                        ),
+                      ).toFixed(2)}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -938,14 +945,14 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             updateExpertAllowance(
                               index,
                               "allowance",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           onBlur={(e) =>
                             updateExpertAllowance(
                               index,
                               "allowance",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           min="0"
@@ -968,14 +975,14 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             updateExpertAllowance(
                               index,
                               "units",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           onBlur={(e) =>
                             updateExpertAllowance(
                               index,
                               "units",
-                              e.target.value,
+                              parseFloat(e.target.value),
                             )
                           }
                           min="1"
@@ -994,10 +1001,10 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                             )
                           }
                           onFocus={(e) =>
-                            updateExpertAllowance(index, "rate", e.target.value)
+                            updateExpertAllowance(index, "rate", parseFloat(e.target.value))
                           }
                           onBlur={(e) =>
-                            updateExpertAllowance(index, "rate", e.target.value)
+                            updateExpertAllowance(index, "rate", parseFloat(e.target.value))
                           }
                           min="0"
                           step="0.01"
@@ -1085,9 +1092,18 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 </span>
                 <span className="font-medium">
                   $
-                  {(
-                    travelExpenses.reduce((acc, curr) => acc + curr.total, 0) +
-                    expertAllowances.reduce((acc, curr) => acc + curr.total, 0)
+                  {Number(
+                    Number(
+                      travelExpenses.reduce((acc, curr) => acc + curr.total, 0),
+                    ) +
+                      (expertAllowances
+                        ? Number(
+                            expertAllowances.reduce(
+                              (acc, curr) => acc + curr.total,
+                              0,
+                            ),
+                          )
+                        : 0),
                   ).toFixed(2)}
                 </span>
               </div>

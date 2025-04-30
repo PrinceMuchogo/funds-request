@@ -56,7 +56,7 @@ export default function CheckerAcquittals() {
   useEffect(() => {
     const getAcquittals = async () => {
       try {
-        const response = await fetch("/api/acquittal/all", {
+        const response = await fetch("/api/acquittal/get/pending-checker", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
