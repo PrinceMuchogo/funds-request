@@ -1057,7 +1057,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 accept="image/*,.pdf"
                 className="mt-2"
                 onChange={handleFileChange}
-                required
+                // required
               />
               <p className="mt-1 text-sm text-gray-500">
                 Upload all relevant receipts and supporting documents (PDF or
