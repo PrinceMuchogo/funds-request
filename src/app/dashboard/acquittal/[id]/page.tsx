@@ -784,7 +784,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           </div>
 
           {/* Existing Expert Allowances */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h2 className="text-lg font-semibold">
               Existing Expert Allowances
             </h2>
@@ -839,13 +839,13 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
                 </TableBody>
               </Table>
             </div>
-          </div>
+          </div> */}
 
           {/* Additional Expert Allowances */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                Additional Expert Allowances
+                Expert Allowances
               </h2>
               <Button
                 type="button"

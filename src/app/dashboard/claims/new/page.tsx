@@ -528,26 +528,6 @@ export default function NewClaim() {
                         />
                       </TableCell>
                       <TableCell>
-                        {/* <Input
-                          type="number"
-                          value={expense.board}
-                          onChange={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "board",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          onFocus={(e) =>
-                            updateTravelExpense(index, "board", e.target.value)
-                          }
-                          onBlur={(e) =>
-                            updateTravelExpense(index, "board", e.target.value)
-                          }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        /> */}
                         <select
                           value={expense.board}
                           onChange={(e) =>
@@ -558,10 +538,18 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "board", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "board",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "board", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "board",
+                              parseFloat(e.target.value),
+                            )
                           }
                           className="min-w-[100px]"
                         >
@@ -570,34 +558,6 @@ export default function NewClaim() {
                         </select>
                       </TableCell>
                       <TableCell>
-                        {/* <Input
-                          type="number"
-                          value={expense.breakfast}
-                          onChange={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "breakfast",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          onFocus={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "breakfast",
-                              e.target.value,
-                            )
-                          }
-                          onBlur={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "breakfast",
-                              e.target.value,
-                            )
-                          }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        /> */}
                         <select
                           value={expense.breakfast}
                           onChange={(e) =>
@@ -628,26 +588,6 @@ export default function NewClaim() {
                         </select>
                       </TableCell>
                       <TableCell>
-                        {/* <Input
-                          type="number"
-                          value={expense.lunch}
-                          onChange={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "lunch",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          onFocus={(e) =>
-                            updateTravelExpense(index, "lunch", e.target.value)
-                          }
-                          onBlur={(e) =>
-                            updateTravelExpense(index, "lunch", e.target.value)
-                          }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        /> */}
                         <select
                           value={expense.lunch}
                           onChange={(e) =>
@@ -658,10 +598,18 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "lunch", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "lunch",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "lunch", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "lunch",
+                              parseFloat(e.target.value),
+                            )
                           }
                           className="min-w-[100px]"
                         >
@@ -670,26 +618,6 @@ export default function NewClaim() {
                         </select>
                       </TableCell>
                       <TableCell>
-                        {/* <Input
-                          type="number"
-                          value={expense.dinner}
-                          onChange={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "dinner",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          onFocus={(e) =>
-                            updateTravelExpense(index, "dinner", e.target.value)
-                          }
-                          onBlur={(e) =>
-                            updateTravelExpense(index, "dinner", e.target.value)
-                          }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        /> */}
                         <select
                           value={expense.dinner}
                           onChange={(e) =>
@@ -700,10 +628,18 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "dinner", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "dinner",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "dinner", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "dinner",
+                              parseFloat(e.target.value),
+                            )
                           }
                           className="min-w-[100px]"
                         >
@@ -712,26 +648,6 @@ export default function NewClaim() {
                         </select>
                       </TableCell>
                       <TableCell>
-                        {/* <Input
-                          type="number"
-                          value={expense.fares}
-                          onChange={(e) =>
-                            updateTravelExpense(
-                              index,
-                              "fares",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          onFocus={(e) =>
-                            updateTravelExpense(index, "fares", e.target.value)
-                          }
-                          onBlur={(e) =>
-                            updateTravelExpense(index, "fares", e.target.value)
-                          }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        /> */}
                         <select
                           value={expense.fares}
                           onChange={(e) =>
@@ -742,10 +658,18 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "fares", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "fares",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "fares", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "fares",
+                              parseFloat(e.target.value),
+                            )
                           }
                           className="min-w-[100px]"
                         >
@@ -754,8 +678,7 @@ export default function NewClaim() {
                         </select>
                       </TableCell>
                       <TableCell>
-                        <Input
-                          type="number"
+                        <select
                           value={expense.supper}
                           onChange={(e) =>
                             updateTravelExpense(
@@ -765,15 +688,24 @@ export default function NewClaim() {
                             )
                           }
                           onFocus={(e) =>
-                            updateTravelExpense(index, "supper", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "supper",
+                              parseFloat(e.target.value),
+                            )
                           }
                           onBlur={(e) =>
-                            updateTravelExpense(index, "supper", parseFloat(e.target.value))
+                            updateTravelExpense(
+                              index,
+                              "supper",
+                              parseFloat(e.target.value),
+                            )
                           }
-                          min="0"
-                          step="0.01"
-                          className="min-w-[80px]"
-                        />
+                          className="min-w-[100px]"
+                        >
+                          <option value="0">Select</option>
+                          <option value="20">$20</option>
+                        </select>
                       </TableCell>
                       <TableCell className="font-medium">
                         ${Number(expense.total).toFixed(2)}
