@@ -225,7 +225,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
       ...expertAllowances,
       {
         day:
-          claim?.expertAndAdministrationAllowances.length! +
+        
           expertAllowances.length +
           1,
         designation: "",
