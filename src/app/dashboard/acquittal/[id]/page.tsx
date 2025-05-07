@@ -462,7 +462,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                Additional Travel Expenses
+                Additional Travelling and Subsistence Allowances
               </h2>
               <Button
                 type="button"
@@ -845,7 +845,7 @@ export default function AcquittalForm({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">
-                Expert Allowances
+                Expert and Administration Allowances
               </h2>
               <Button
                 type="button"
